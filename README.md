@@ -40,11 +40,69 @@ This app implements 10+ professional prompt engineering techniques:
 3. **Context-Aware Dynamic Prompting** - Adapts based on story completeness
 4. **Role-Based System Prompting** - Senior architect + QA engineer persona
 5. **Few-Shot Learning** - Quality examples (Good vs Bad analysis)
-6. **Structured Output** - Clean Markdown format with 6 sections
+6. **Structured Output** - Clean Markdown format with 7 sections
 7. **Anti-Hallucination Guidelines** - Strict rules: use ONLY story terms, no assumptions
 8. **User Context Integration** - Analyst notes embedded in story description
 9. **Temperature Optimization** - 0.2 for consistency, 1200 tokens for completeness
 10. **Conversation History** - Maintains context across follow-up questions
+
+### Prompt Structure
+
+The prompt is organized using XML tags for clarity and consists of:
+
+**System Role:**
+```
+You are a senior software architect and QA engineer specialized in analyzing 
+Jira user stories. CRITICAL RULE: Base your analysis EXCLUSIVELY on information 
+explicitly provided. DO NOT invent or assume information not present.
+```
+
+**Input Structure:**
+```xml
+<task>Analyze the user story to identify gaps and opportunities</task>
+
+<input_data>
+  <story_metadata>ID, Title, Status, Priority, Labels</story_metadata>
+  <story_description>Description + User Notes (if provided)</story_description>
+  <acceptance_criteria>Criteria from Jira</acceptance_criteria>
+  <additional_context>Comments and context</additional_context>
+  <context_analysis>Dynamic warnings based on completeness</context_analysis>
+</input_data>
+
+<analysis_methodology>
+  5-step chain-of-thought:
+  1. UNDERSTAND: Identify core user need
+  2. DECOMPOSE: Break down components
+  3. IDENTIFY GAPS: Find missing information
+  4. ASSESS QUALITY: Evaluate completeness
+  5. FORMULATE QUESTIONS: What needs clarification
+</analysis_methodology>
+
+<output_format>
+  ## 1. REQUIREMENT SUMMARY
+  ## 2. KEY REQUIREMENTS (What needs to be built)
+  ## 3. REQUIREMENT STRUCTURE
+  ## 4. ACCEPTANCE CRITERIA (Restructured)
+  ## 5. MISSING INFORMATION
+  ## 6. CLARIFICATION QUESTIONS
+  ## 7. RECOMMENDATIONS
+</output_format>
+
+<guidelines>
+  - FOCUS ON WHAT'S PRESENT first
+  - Restructure information for clarity
+  - Highlight key requirements
+  - CRITICAL ANTI-HALLUCINATION RULES
+  - CONSTRUCTIVE APPROACH
+</guidelines>
+```
+
+**Key Design Decisions:**
+- XML for input structure (better AI parsing)
+- Markdown for output (better readability)
+- Explicit reasoning steps (chain-of-thought)
+- Dynamic context warnings (adapts to story quality)
+- Strict anti-hallucination rules (prevents invented details)
 
 ## 💡 How Kiro Accelerated Development
 
