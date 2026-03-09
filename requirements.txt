@@ -1,0 +1,5 @@
+# Dependencias de producción
+jira>=3.5.0
+litellm>=1.0.0
+python-dotenv>=1.0.0
+tkinter-tooltip>=2.1.0
