@@ -1,6 +1,6 @@
-<img width="1917" height="999" alt="image" src="https://github.com/user-attachments/assets/c3e64f73-3902-4ebd-8674-410379aad240" />
-
 # Story Prompt Analyzer
+
+<img width="517" height="499" alt="image" src="https://github.com/user-attachments/assets/c3e64f73-3902-4ebd-8674-410379aad240" />
 
 A professional AI-powered tool for analyzing Jira user stories, identifying gaps, ambiguities, and improvement opportunities using advanced prompt engineering techniques.
 
