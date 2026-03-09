@@ -258,11 +258,31 @@ class StoryAnalyzerGUI:
         )
         self.export_sprint_button.grid(row=0, column=3, sticky=tk.N)
         
-        # Selector de proveedor y modelo (compartido con single story)
+        # Selector de proveedor
         ttk.Label(sprint_input_frame, text=self.i18n.get("provider_label")).grid(row=1, column=0, sticky=tk.W, padx=(0, 10), pady=(10, 0))
         
-        provider_label = ttk.Label(sprint_input_frame, text="(Using settings from Single Story tab)")
-        provider_label.grid(row=1, column=1, sticky=tk.W, pady=(10, 0))
+        # Usar las mismas variables que el tab single story
+        sprint_provider_combo = ttk.Combobox(
+            sprint_input_frame, 
+            textvariable=self.provider_var,
+            values=["OpenAI", "Anthropic"],
+            state="readonly",
+            width=28
+        )
+        sprint_provider_combo.grid(row=1, column=1, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
+        sprint_provider_combo.bind("<<ComboboxSelected>>", self._on_provider_change)
+        
+        # Selector de modelo
+        ttk.Label(sprint_input_frame, text=self.i18n.get("model_label")).grid(row=2, column=0, sticky=tk.W, padx=(0, 10), pady=(10, 0))
+        
+        sprint_model_combo = ttk.Combobox(
+            sprint_input_frame, 
+            textvariable=self.model_var,
+            values=self.models_by_provider["OpenAI"],
+            state="readonly",
+            width=28
+        )
+        sprint_model_combo.grid(row=2, column=1, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
         
         # Frame de salida
         sprint_output_frame = ttk.LabelFrame(self.sprint_tab, text=self.i18n.get("analysis_section"), padding="10")
