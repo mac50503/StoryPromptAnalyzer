@@ -558,6 +558,397 @@ Malo: "No se menciona el rendimiento."
         except Exception as e:
             raise Exception(f"Error al analizar la historia: {str(e)}")
     
+    def analyze_sprint(self, stories_data: list, callback=None) -> str:
+        """
+        Analiza múltiples historias como un sprint, identificando dependencias y generando plan de trabajo.
+        
+        Args:
+            stories_data: Lista de datos de historias de usuario
+            callback: Función opcional para recibir chunks en tiempo real
+            
+        Returns:
+            Análisis consolidado del sprint
+        """
+        try:
+            prompt = self._create_sprint_analysis_prompt(stories_data)
+            system_role = self._get_sprint_system_role()
+            
+            response = completion(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_role},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                max_tokens=3000,  # Más tokens para análisis consolidado
+                stream=True
+            )
+            
+            # Recolectar el contenido del stream
+            full_content = ""
+            for chunk in response:
+                if hasattr(chunk, 'choices') and len(chunk.choices) > 0:
+                    delta = chunk.choices[0].delta
+                    if hasattr(delta, 'content') and delta.content:
+                        full_content += delta.content
+                        if callback:
+                            callback(delta.content)
+            
+            return full_content
+            
+        except Exception as e:
+            raise Exception(f"Error analyzing sprint: {str(e)}")
+    
+    def _create_sprint_analysis_prompt(self, stories_data: list) -> str:
+        """
+        Crea prompt para análisis consolidado de sprint.
+        
+        Args:
+            stories_data: Lista de historias del sprint
+            
+        Returns:
+            Prompt formateado
+        """
+        if self.language == "es":
+            return self._create_spanish_sprint_prompt(stories_data)
+        else:
+            return self._create_english_sprint_prompt(stories_data)
+    
+    def _create_english_sprint_prompt(self, stories_data: list) -> str:
+        """Creates English prompt for sprint analysis."""
+        
+        # Build stories summary
+        stories_summary = ""
+        for i, story in enumerate(stories_data, 1):
+            stories_summary += f"""
+<story_{i}>
+<metadata>
+ID: {story['key']}
+Title: {story['title']}
+Priority: {story['priority']}
+Status: {story['status']}
+</metadata>
+<description>
+{story['description'] or 'No description'}
+</description>
+<acceptance_criteria>
+{story['acceptance_criteria'] or 'No acceptance criteria'}
+</acceptance_criteria>
+</story_{i}>
+
+"""
+        
+        prompt = f"""<task>
+Analyze this sprint containing {len(stories_data)} user stories as a cohesive unit. Identify dependencies, conflicts, risks, and generate an implementation work plan.
+</task>
+
+<sprint_stories>
+{stories_summary}
+</sprint_stories>
+
+<analysis_objectives>
+1. UNDERSTAND SCOPE: What is the overall goal of this sprint?
+2. IDENTIFY DEPENDENCIES: Which stories depend on others? (technical, data, or functional dependencies)
+3. DETECT CONFLICTS: Are there overlapping functionalities or contradictions?
+4. ASSESS RISKS: What could block or delay the sprint?
+5. PRIORITIZE WORK: What's the optimal implementation order?
+6. GENERATE PLAN: Create a concrete work plan with phases
+</analysis_objectives>
+
+<output_format>
+## 1. SPRINT OVERVIEW
+
+**Sprint Goal:** [Inferred overall objective]
+**Total Stories:** {len(stories_data)}
+**Complexity Assessment:** [High/Medium/Low with justification]
+
+## 2. STORIES SUMMARY
+
+| Story ID | Title | Priority | Complexity | Status |
+|----------|-------|----------|------------|--------|
+[Table with all stories]
+
+## 3. DEPENDENCY ANALYSIS
+
+**Technical Dependencies:**
+- [Story A] → [Story B]: [Reason - e.g., "Story B requires API from Story A"]
+- [Story C] → [Story D]: [Reason]
+
+**Data Dependencies:**
+- [Story X] → [Story Y]: [Reason - e.g., "Story Y needs data model from Story X"]
+
+**Functional Dependencies:**
+- [Story M] → [Story N]: [Reason - e.g., "Story N builds on feature from Story M"]
+
+**Dependency Graph (ASCII):**
+```
+[Visual representation of dependencies]
+```
+
+## 4. CONFLICTS & OVERLAPS
+
+**Potential Conflicts:**
+- [Story A] vs [Story B]: [Description of conflict]
+
+**Overlapping Functionality:**
+- [Stories that might duplicate work]
+
+**Recommendations:**
+- [How to resolve conflicts]
+
+## 5. RISK ASSESSMENT
+
+**Critical Risks (High Impact):**
+1. [Risk description] - Affects: [Story IDs] - Mitigation: [Strategy]
+2. [Risk description] - Affects: [Story IDs] - Mitigation: [Strategy]
+
+**Medium Risks:**
+1. [Risk description] - Affects: [Story IDs] - Mitigation: [Strategy]
+
+**Blockers:**
+- [What could completely stop the sprint]
+
+## 6. MISSING INFORMATION
+
+**Critical Gaps Across Stories:**
+- [Information needed before sprint starts]
+
+**Per-Story Gaps:**
+- {stories_data[0]['key']}: [Key missing info]
+- [Continue for stories with significant gaps]
+
+## 7. IMPLEMENTATION PLAN
+
+**Phase 1: Foundation (Week 1)**
+- Stories: [IDs]
+- Rationale: [Why these first]
+- Deliverables: [What will be ready]
+
+**Phase 2: Core Features (Week 1-2)**
+- Stories: [IDs]
+- Rationale: [Why this order]
+- Dependencies: [What from Phase 1 is needed]
+
+**Phase 3: Integration (Week 2)**
+- Stories: [IDs]
+- Rationale: [Why these last]
+- Integration Points: [What needs to connect]
+
+**Phase 4: Polish & Testing (Week 2)**
+- Stories: [IDs]
+- Focus: [Final touches, edge cases]
+
+## 8. RECOMMENDATIONS
+
+**For Product Owner:**
+1. [Recommendation about scope/priorities]
+2. [Recommendation about missing info]
+
+**For Development Team:**
+1. [Technical recommendation]
+2. [Architecture recommendation]
+
+**For Sprint Success:**
+1. [Process recommendation]
+2. [Communication recommendation]
+
+## 9. SUCCESS METRICS
+
+**Definition of Done for Sprint:**
+- [Criteria 1]
+- [Criteria 2]
+
+**Key Milestones:**
+- Day 3: [Milestone]
+- Day 7: [Milestone]
+- Day 10: [Milestone]
+</output_format>
+
+<guidelines>
+- Base analysis EXCLUSIVELY on provided stories
+- Identify REAL dependencies (not assumed)
+- Be specific about WHY stories depend on each other
+- Prioritize based on dependencies and risk
+- Provide actionable, concrete recommendations
+- Consider team capacity and sprint timeline
+- Flag any story that seems out of scope
+</guidelines>"""
+
+        return prompt
+    
+    def _create_spanish_sprint_prompt(self, stories_data: list) -> str:
+        """Crea prompt en español para análisis de sprint."""
+        
+        # Build stories summary
+        stories_summary = ""
+        for i, story in enumerate(stories_data, 1):
+            stories_summary += f"""
+<historia_{i}>
+<metadatos>
+ID: {story['key']}
+Título: {story['title']}
+Prioridad: {story['priority']}
+Estado: {story['status']}
+</metadatos>
+<descripcion>
+{story['description'] or 'Sin descripción'}
+</descripcion>
+<criterios_aceptacion>
+{story['acceptance_criteria'] or 'Sin criterios de aceptación'}
+</criterios_aceptacion>
+</historia_{i}>
+
+"""
+        
+        prompt = f"""<tarea>
+Analiza este sprint que contiene {len(stories_data)} historias de usuario como una unidad cohesiva. Identifica dependencias, conflictos, riesgos y genera un plan de trabajo de implementación.
+</tarea>
+
+<historias_sprint>
+{stories_summary}
+</historias_sprint>
+
+<objetivos_analisis>
+1. COMPRENDER ALCANCE: ¿Cuál es el objetivo general de este sprint?
+2. IDENTIFICAR DEPENDENCIAS: ¿Qué historias dependen de otras? (dependencias técnicas, de datos o funcionales)
+3. DETECTAR CONFLICTOS: ¿Hay funcionalidades superpuestas o contradicciones?
+4. EVALUAR RIESGOS: ¿Qué podría bloquear o retrasar el sprint?
+5. PRIORIZAR TRABAJO: ¿Cuál es el orden óptimo de implementación?
+6. GENERAR PLAN: Crear un plan de trabajo concreto con fases
+</objetivos_analisis>
+
+<formato_salida>
+## 1. RESUMEN DEL SPRINT
+
+**Objetivo del Sprint:** [Objetivo general inferido]
+**Total de Historias:** {len(stories_data)}
+**Evaluación de Complejidad:** [Alta/Media/Baja con justificación]
+
+## 2. RESUMEN DE HISTORIAS
+
+| Story ID | Título | Prioridad | Complejidad | Estado |
+|----------|--------|-----------|-------------|--------|
+[Tabla con todas las historias]
+
+## 3. ANÁLISIS DE DEPENDENCIAS
+
+**Dependencias Técnicas:**
+- [Historia A] → [Historia B]: [Razón - ej: "Historia B requiere API de Historia A"]
+- [Historia C] → [Historia D]: [Razón]
+
+**Dependencias de Datos:**
+- [Historia X] → [Historia Y]: [Razón - ej: "Historia Y necesita modelo de datos de Historia X"]
+
+**Dependencias Funcionales:**
+- [Historia M] → [Historia N]: [Razón - ej: "Historia N se construye sobre funcionalidad de Historia M"]
+
+**Grafo de Dependencias (ASCII):**
+```
+[Representación visual de dependencias]
+```
+
+## 4. CONFLICTOS Y SOLAPAMIENTOS
+
+**Conflictos Potenciales:**
+- [Historia A] vs [Historia B]: [Descripción del conflicto]
+
+**Funcionalidad Superpuesta:**
+- [Historias que podrían duplicar trabajo]
+
+**Recomendaciones:**
+- [Cómo resolver conflictos]
+
+## 5. EVALUACIÓN DE RIESGOS
+
+**Riesgos Críticos (Alto Impacto):**
+1. [Descripción del riesgo] - Afecta: [IDs de historias] - Mitigación: [Estrategia]
+2. [Descripción del riesgo] - Afecta: [IDs de historias] - Mitigación: [Estrategia]
+
+**Riesgos Medios:**
+1. [Descripción del riesgo] - Afecta: [IDs de historias] - Mitigación: [Estrategia]
+
+**Bloqueadores:**
+- [Qué podría detener completamente el sprint]
+
+## 6. INFORMACIÓN FALTANTE
+
+**Brechas Críticas Entre Historias:**
+- [Información necesaria antes de iniciar el sprint]
+
+**Brechas Por Historia:**
+- {stories_data[0]['key']}: [Información clave faltante]
+- [Continuar para historias con brechas significativas]
+
+## 7. PLAN DE IMPLEMENTACIÓN
+
+**Fase 1: Fundación (Semana 1)**
+- Historias: [IDs]
+- Justificación: [Por qué estas primero]
+- Entregables: [Qué estará listo]
+
+**Fase 2: Características Principales (Semana 1-2)**
+- Historias: [IDs]
+- Justificación: [Por qué este orden]
+- Dependencias: [Qué de Fase 1 se necesita]
+
+**Fase 3: Integración (Semana 2)**
+- Historias: [IDs]
+- Justificación: [Por qué estas al final]
+- Puntos de Integración: [Qué necesita conectarse]
+
+**Fase 4: Pulido y Pruebas (Semana 2)**
+- Historias: [IDs]
+- Enfoque: [Toques finales, casos edge]
+
+## 8. RECOMENDACIONES
+
+**Para el Product Owner:**
+1. [Recomendación sobre alcance/prioridades]
+2. [Recomendación sobre información faltante]
+
+**Para el Equipo de Desarrollo:**
+1. [Recomendación técnica]
+2. [Recomendación de arquitectura]
+
+**Para Éxito del Sprint:**
+1. [Recomendación de proceso]
+2. [Recomendación de comunicación]
+
+## 9. MÉTRICAS DE ÉXITO
+
+**Definición de Terminado para el Sprint:**
+- [Criterio 1]
+- [Criterio 2]
+
+**Hitos Clave:**
+- Día 3: [Hito]
+- Día 7: [Hito]
+- Día 10: [Hito]
+</formato_salida>
+
+<directrices>
+- Basa el análisis EXCLUSIVAMENTE en las historias proporcionadas
+- Identifica dependencias REALES (no asumidas)
+- Sé específico sobre POR QUÉ las historias dependen entre sí
+- Prioriza basándote en dependencias y riesgo
+- Proporciona recomendaciones concretas y accionables
+- Considera capacidad del equipo y timeline del sprint
+- Señala cualquier historia que parezca fuera de alcance
+</directrices>"""
+
+        return prompt
+    
+    def _get_sprint_system_role(self) -> str:
+        """Obtiene el rol del sistema para análisis de sprint."""
+        if self.language == "es":
+            return """Eres un arquitecto de software senior y Scrum Master especializado en planificación de sprints y análisis de dependencias entre historias de usuario.
+
+REGLA CRÍTICA: Analiza las historias como un conjunto cohesivo. Identifica dependencias REALES basadas en la información proporcionada. NO inventes dependencias o asumas información que no está presente. Genera un plan de trabajo práctico y realista."""
+        else:
+            return """You are a senior software architect and Scrum Master specialized in sprint planning and analyzing dependencies between user stories.
+
+CRITICAL RULE: Analyze stories as a cohesive set. Identify REAL dependencies based on provided information. DO NOT invent dependencies or assume information not present. Generate a practical and realistic work plan."""
+    
     def followup_question(self, story_data: Dict[str, Any], conversation_history: list, question: str, callback=None) -> str:
         """
         Procesa una pregunta de seguimiento sobre el análisis.

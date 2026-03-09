@@ -58,7 +58,7 @@ class StoryAnalyzerGUI:
         self.root.columnconfigure(0, weight=1)
         self.root.rowconfigure(0, weight=1)
         main_frame.columnconfigure(0, weight=1)
-        main_frame.rowconfigure(2, weight=1)
+        main_frame.rowconfigure(1, weight=1)
         
         # Título
         title_label = ttk.Label(
@@ -68,9 +68,41 @@ class StoryAnalyzerGUI:
         )
         title_label.grid(row=0, column=0, pady=(0, 20))
         
+        # Crear notebook (tabs)
+        self.notebook = ttk.Notebook(main_frame)
+        self.notebook.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Tab 1: Single Story Analysis
+        self.single_tab = ttk.Frame(self.notebook, padding="10")
+        self.notebook.add(self.single_tab, text=self.i18n.get("tab_single"))
+        
+        # Tab 2: Sprint Analysis
+        self.sprint_tab = ttk.Frame(self.notebook, padding="10")
+        self.notebook.add(self.sprint_tab, text=self.i18n.get("tab_sprint"))
+        
+        # Setup each tab
+        self._setup_single_story_tab()
+        self._setup_sprint_analysis_tab()
+        
+        # Barra de estado (compartida)
+        self.status_var = tk.StringVar(value=self.i18n.get("status_ready"))
+        status_bar = ttk.Label(
+            main_frame, 
+            textvariable=self.status_var, 
+            relief=tk.SUNKEN, 
+            anchor=tk.W
+        )
+        status_bar.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(10, 0))
+    
+    def _setup_single_story_tab(self) -> None:
+        """Configura el tab de análisis de historia individual."""
+        # Configurar peso de filas y columnas
+        self.single_tab.columnconfigure(0, weight=1)
+        self.single_tab.rowconfigure(1, weight=1)
+        
         # Frame de entrada
-        input_frame = ttk.LabelFrame(main_frame, text=self.i18n.get("input_section"), padding="10")
-        input_frame.grid(row=1, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
+        input_frame = ttk.LabelFrame(self.single_tab, text=self.i18n.get("input_section"), padding="10")
+        input_frame.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
         input_frame.columnconfigure(1, weight=1)
         
         # Campo de Story ID
@@ -146,8 +178,8 @@ class StoryAnalyzerGUI:
         self.user_notes_text.grid(row=3, column=1, columnspan=2, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
         
         # Frame de salida
-        output_frame = ttk.LabelFrame(main_frame, text=self.i18n.get("analysis_section"), padding="10")
-        output_frame.grid(row=2, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        output_frame = ttk.LabelFrame(self.single_tab, text=self.i18n.get("analysis_section"), padding="10")
+        output_frame.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         output_frame.columnconfigure(0, weight=1)
         output_frame.rowconfigure(0, weight=1)
         
@@ -163,8 +195,8 @@ class StoryAnalyzerGUI:
         self.output_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         
         # Frame de seguimiento/chat
-        followup_frame = ttk.LabelFrame(main_frame, text=self.i18n.get("followup_section"), padding="10")
-        followup_frame.grid(row=3, column=0, sticky=(tk.W, tk.E), pady=(10, 0))
+        followup_frame = ttk.LabelFrame(self.single_tab, text=self.i18n.get("followup_section"), padding="10")
+        followup_frame.grid(row=2, column=0, sticky=(tk.W, tk.E), pady=(10, 0))
         followup_frame.columnconfigure(0, weight=1)
         
         # Campo de entrada para preguntas de seguimiento
@@ -185,15 +217,72 @@ class StoryAnalyzerGUI:
         self.conversation_history = []
         self.current_story_data = None
         
-        # Barra de estado
-        self.status_var = tk.StringVar(value=self.i18n.get("status_ready"))
-        status_bar = ttk.Label(
-            main_frame, 
-            textvariable=self.status_var, 
-            relief=tk.SUNKEN, 
-            anchor=tk.W
+    def _setup_sprint_analysis_tab(self) -> None:
+        """Configura el tab de análisis de sprint."""
+        # Configurar peso de filas y columnas
+        self.sprint_tab.columnconfigure(0, weight=1)
+        self.sprint_tab.rowconfigure(1, weight=1)
+        
+        # Frame de entrada
+        sprint_input_frame = ttk.LabelFrame(self.sprint_tab, text=self.i18n.get("input_section"), padding="10")
+        sprint_input_frame.grid(row=0, column=0, sticky=(tk.W, tk.E), pady=(0, 10))
+        sprint_input_frame.columnconfigure(1, weight=1)
+        
+        # Campo de Story IDs
+        ttk.Label(sprint_input_frame, text=self.i18n.get("story_ids_label")).grid(row=0, column=0, sticky=(tk.W, tk.N), padx=(0, 10))
+        
+        self.story_ids_text = tk.Text(
+            sprint_input_frame,
+            width=40,
+            height=5,
+            font=("Segoe UI", 9),
+            wrap=tk.WORD
         )
-        status_bar.grid(row=4, column=0, sticky=(tk.W, tk.E), pady=(10, 0))
+        self.story_ids_text.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(0, 10))
+        self.story_ids_text.insert("1.0", "PROJ-123, PROJ-124, PROJ-125")
+        
+        # Botón de análisis de sprint
+        self.analyze_sprint_button = ttk.Button(
+            sprint_input_frame, 
+            text=self.i18n.get("analyze_sprint_button"), 
+            command=self._analyze_sprint
+        )
+        self.analyze_sprint_button.grid(row=0, column=2, padx=(0, 5), sticky=tk.N)
+        
+        # Botón de exportar sprint
+        self.export_sprint_button = ttk.Button(
+            sprint_input_frame,
+            text=self.i18n.get("export_button"),
+            command=self._export_sprint_analysis,
+            state="disabled"
+        )
+        self.export_sprint_button.grid(row=0, column=3, sticky=tk.N)
+        
+        # Selector de proveedor y modelo (compartido con single story)
+        ttk.Label(sprint_input_frame, text=self.i18n.get("provider_label")).grid(row=1, column=0, sticky=tk.W, padx=(0, 10), pady=(10, 0))
+        
+        provider_label = ttk.Label(sprint_input_frame, text="(Using settings from Single Story tab)")
+        provider_label.grid(row=1, column=1, sticky=tk.W, pady=(10, 0))
+        
+        # Frame de salida
+        sprint_output_frame = ttk.LabelFrame(self.sprint_tab, text=self.i18n.get("analysis_section"), padding="10")
+        sprint_output_frame.grid(row=1, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        sprint_output_frame.columnconfigure(0, weight=1)
+        sprint_output_frame.rowconfigure(0, weight=1)
+        
+        # Área de texto para análisis de sprint
+        self.sprint_output_text = RichTextViewer(
+            sprint_output_frame,
+            width=80,
+            height=25,
+            font=("Consolas", 10),
+            bg='white',
+            fg='#2c3e50'
+        )
+        self.sprint_output_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Variable para mantener datos del sprint
+        self.current_sprint_data = None
 
     def _initialize_clients(self) -> None:
         """Inicializa los clientes de Jira y IA."""
@@ -441,6 +530,195 @@ Priority: {story_data['priority']}
                     ExportManager.export_to_pdf(content, filename, self.current_story_data['key'])
                 elif ext == '.docx':
                     ExportManager.export_to_docx(content, filename, self.current_story_data['key'])
+                else:
+                    # Exportar como texto plano
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                
+                messagebox.showinfo(
+                    self.i18n.get("success"),
+                    self.i18n.get("export_success", filename=os.path.basename(filename))
+                )
+                self.status_var.set(self.i18n.get("status_exported", filename=os.path.basename(filename)))
+                
+            except Exception as e:
+                messagebox.showerror(
+                    self.i18n.get("error"),
+                    self.i18n.get("error_export", error=str(e))
+                )
+                self.status_var.set(self.i18n.get("status_error"))
+    
+    def _analyze_sprint(self) -> None:
+        """Analiza múltiples historias de usuario como un sprint."""
+        story_ids_text = self.story_ids_text.get("1.0", tk.END).strip()
+        
+        if not story_ids_text:
+            messagebox.showwarning(
+                self.i18n.get("warning"), 
+                self.i18n.get("warning_empty_stories")
+            )
+            return
+        
+        # Parsear IDs (separados por coma, espacio o línea)
+        import re
+        story_ids = re.split(r'[,\s\n]+', story_ids_text)
+        story_ids = [sid.strip() for sid in story_ids if sid.strip()]
+        
+        if len(story_ids) < 2:
+            messagebox.showwarning(
+                self.i18n.get("warning"),
+                "Please enter at least 2 Story IDs for sprint analysis"
+            )
+            return
+        
+        # Inicializar clientes si no existen
+        if not self.jira_client or not self.ai_analyzer:
+            try:
+                self.status_var.set(self.i18n.get("status_connecting"))
+                self.root.update()
+                self.jira_client = JiraClient.from_env()
+                self.ai_analyzer = AIAnalyzer(
+                    model=self._get_full_model_name(),
+                    language=self.i18n.language
+                )
+            except Exception as e:
+                self.status_var.set(self.i18n.get("status_error"))
+                messagebox.showerror(
+                    self.i18n.get("error"),
+                    self.i18n.get("error_connection", error=str(e))
+                )
+                return
+        
+        # Limpiar salida anterior
+        self.sprint_output_text.clear()
+        self.current_sprint_data = None
+        self.export_sprint_button.config(state="disabled")
+        
+        self.status_var.set(self.i18n.get("status_fetching_multiple", count=len(story_ids)))
+        self.analyze_sprint_button.config(state="disabled")
+        self.root.update()
+        
+        try:
+            # Obtener todas las historias de Jira
+            stories_data = []
+            for story_id in story_ids:
+                try:
+                    story_data = self.jira_client.get_user_story(story_id)
+                    stories_data.append(story_data)
+                except Exception as e:
+                    self.sprint_output_text.append_text(
+                        f"⚠️ Warning: Could not fetch {story_id}: {str(e)}\n\n",
+                        'normal'
+                    )
+            
+            if not stories_data:
+                raise Exception("No stories could be fetched from Jira")
+            
+            self.current_sprint_data = stories_data
+            
+            provider = self.provider_var.get()
+            model = self.model_var.get()
+            self.status_var.set(self.i18n.get("status_analyzing_sprint", count=len(stories_data)))
+            self.root.update()
+            
+            # Actualizar modelo si cambió
+            self.ai_analyzer.model = self._get_full_model_name()
+            self.ai_analyzer.language = self.i18n.language
+            
+            # Mostrar encabezado
+            self._display_sprint_header(stories_data)
+            
+            # Callback para streaming
+            def stream_callback(chunk: str):
+                self.sprint_output_text.append_text(chunk, 'normal')
+                self.root.update()
+            
+            # Analizar sprint con IA
+            self.status_var.set(self.i18n.get("status_generating_plan"))
+            analysis = self.ai_analyzer.analyze_sprint(stories_data, callback=stream_callback)
+            
+            self.status_var.set(self.i18n.get("status_completed_sprint", count=len(stories_data)))
+            
+            # Habilitar exportar
+            self.export_sprint_button.config(state="normal")
+            
+        except Exception as e:
+            messagebox.showerror(
+                self.i18n.get("error"), 
+                self.i18n.get("error_analysis", error=str(e))
+            )
+            self.status_var.set(self.i18n.get("status_error"))
+        finally:
+            self.analyze_sprint_button.config(state="normal")
+    
+    def _display_sprint_header(self, stories_data: list) -> None:
+        """
+        Muestra el encabezado del análisis de sprint.
+        
+        Args:
+            stories_data: Lista de datos de historias
+        """
+        header = f"""{'='*80}
+SPRINT ANALYSIS: {len(stories_data)} Stories
+{'='*80}
+
+Stories:
+"""
+        for story in stories_data:
+            header += f"  - {story['key']}: {story['title']} [{story['priority']}]\n"
+        
+        header += f"\n{'='*80}\n\n"
+        self.sprint_output_text.append_text(header, 'normal')
+    
+    def _export_sprint_analysis(self) -> None:
+        """Exporta el análisis de sprint a un archivo."""
+        if not self.current_sprint_data:
+            messagebox.showwarning(
+                self.i18n.get("warning"),
+                self.i18n.get("warning_no_analysis")
+            )
+            return
+        
+        # Obtener contenido del análisis
+        content = self.sprint_output_text.get_all_text()
+        
+        if not content.strip():
+            messagebox.showwarning(
+                self.i18n.get("warning"),
+                self.i18n.get("warning_empty_analysis")
+            )
+            return
+        
+        # Generar nombre de archivo sugerido
+        story_ids = [s['key'].replace('-', '_') for s in self.current_sprint_data[:3]]
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        default_filename = f"sprint_analysis_{'_'.join(story_ids)}_etc_{timestamp}"
+        
+        # Abrir diálogo para guardar archivo
+        filename = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            initialfile=default_filename,
+            filetypes=[
+                (self.i18n.get("pdf_files"), "*.pdf"),
+                (self.i18n.get("word_files"), "*.docx"),
+                (self.i18n.get("text_files"), "*.txt"),
+                (self.i18n.get("markdown_files"), "*.md"),
+                (self.i18n.get("all_files"), "*.*")
+            ],
+            title=self.i18n.get("export_title")
+        )
+        
+        if filename:
+            try:
+                # Determinar formato por extensión
+                ext = os.path.splitext(filename)[1].lower()
+                
+                sprint_title = f"Sprint Analysis ({len(self.current_sprint_data)} stories)"
+                
+                if ext == '.pdf':
+                    ExportManager.export_to_pdf(content, filename, sprint_title)
+                elif ext == '.docx':
+                    ExportManager.export_to_docx(content, filename, sprint_title)
                 else:
                     # Exportar como texto plano
                     with open(filename, 'w', encoding='utf-8') as f:
