@@ -157,6 +157,12 @@ python src/main.py
 
 Built with Kiro AI Assistant. Contributions welcome via Pull Requests.
 
+## 👨‍💻 Author
+
+**Miguel Angel Cervantes Juarez**
+- Software Architect
+- GitHub: [@mac50503](https://github.com/mac50503)
+
 ## 📄 License
 
 MIT License - see LICENSE file for details.
