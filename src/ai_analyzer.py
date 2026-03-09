@@ -127,7 +127,20 @@ User Story: As a [who], I want [what], so that [why]
 Business Value: [One sentence describing business impact]
 Core Functionality: [2-3 sentences describing main feature]
 
-## 2. REQUIREMENT STRUCTURE
+## 2. KEY REQUIREMENTS (What needs to be built)
+
+**Core Features:**
+- [Feature 1: Clear description]
+- [Feature 2: Clear description]
+- [Feature 3: Clear description]
+
+**User Interactions:**
+- [How users will interact with this feature]
+
+**Expected Outcomes:**
+- [What should happen when feature works correctly]
+
+## 3. REQUIREMENT STRUCTURE
 
 **Actors:** [Comma-separated list]
 
@@ -136,42 +149,38 @@ Core Functionality: [2-3 sentences describing main feature]
 2. [Step 2]
 ...
 
-**Dependencies:**
-- Technical: [List or "None identified"]
-- Business: [List or "None identified"]
+## 4. ACCEPTANCE CRITERIA (Restructured)
 
-## 3. DETECTED AMBIGUITIES
+Organize and clarify the acceptance criteria in Given-When-Then format:
 
-**Critical (Must clarify before development):**
+**Scenario 1: [Name]**
+- Given: [Precondition]
+- When: [Action]
+- Then: [Expected result]
+
+**Scenario 2: [Name]**
+- Given: [Precondition]
+- When: [Action]
+- Then: [Expected result]
+
+[Add more scenarios as needed based on the story]
+
+## 5. MISSING INFORMATION
+
+**Critical Gaps (Must clarify before development):**
 - [Item 1]
 - [Item 2]
-
-**Minor (Should clarify but not blocking):**
-- [Item 1]
-
-**Vague Terms Requiring Definition:**
-- "[term]": [Why it's vague]
-
-## 4. MISSING INFORMATION
-
-**Acceptance Criteria Gaps:**
-- [Specific gap 1]
-- [Specific gap 2]
-
-**Unaddressed Edge Cases:**
-- [Case 1: Description]
-- [Case 2: Description]
 
 **Non-Functional Requirements:**
 - Performance: [What's missing or "Not specified"]
 - Security: [What's missing or "Not specified"]
 - Scalability: [What's missing or "Not specified"]
-- Accessibility: [What's missing or "Not specified"]
 
-**Data Requirements:**
-- [What data/context is needed]
+**Edge Cases to Consider:**
+- [Case 1: Description]
+- [Case 2: Description]
 
-## 5. CLARIFICATION QUESTIONS
+## 6. CLARIFICATION QUESTIONS
 
 **For Product Owner:**
 1. [Specific question about business logic]
@@ -188,31 +197,27 @@ Core Functionality: [2-3 sentences describing main feature]
 2. [Specific question about error handling]
 3. [Specific question about validation]
 
-## 6. RECOMMENDATIONS
+## 7. RECOMMENDATIONS
 
-**Immediate Actions (Before Development):**
-- [Action 1 with rationale]
-- [Action 2 with rationale]
+**To Improve Clarity:**
+- [Suggestion 1 to make requirements clearer]
+- [Suggestion 2 to make requirements clearer]
 
-**Quality Improvements:**
-- [Improvement 1]
-- [Improvement 2]
+**To Ensure Completeness:**
+- [What should be added to make story complete]
 
 **Risk Mitigation:**
 - [Risk 1]: [Mitigation strategy]
 - [Risk 2]: [Mitigation strategy]
-
-**Alternative Approaches:**
-- [Alternative 1]: [When to consider]
 </output_format>
 
 <guidelines>
 - Be specific and actionable in all recommendations
-- Prioritize critical issues that block development
+- FOCUS ON WHAT'S PRESENT: Start by clearly identifying and organizing what information IS provided
+- Restructure information to make it clearer and more actionable
+- Highlight key requirements and core functionality
 - Provide concrete examples when identifying problems
-- Focus on what's missing or unclear, not what's already clear
 - Use bullet points for lists, numbered lists for sequences
-- If something is well-defined, acknowledge it briefly and move on
 - Limit each section to the most important 3-5 items
 
 CRITICAL ANTI-HALLUCINATION RULES:
@@ -224,6 +229,13 @@ CRITICAL ANTI-HALLUCINATION RULES:
 - If you need to suggest something new, clearly mark it as "RECOMMENDATION" or "SUGGESTION", not as existing functionality
 - When in doubt about whether something was mentioned, DO NOT include it - only reference what is explicitly stated
 - If the story lacks information, point out what's missing rather than filling in the gaps with assumptions
+
+CONSTRUCTIVE APPROACH:
+- Start with what's clear and well-defined
+- Reorganize information to make it more structured
+- Extract key points and make them prominent
+- Then identify gaps in a helpful, constructive manner
+- Provide recommendations to improve, not just criticize
 </guidelines>
 
 <example_quality>
@@ -325,7 +337,20 @@ Historia de Usuario: Como [quién], quiero [qué], para [por qué]
 Valor de Negocio: [Una oración describiendo el impacto de negocio]
 Funcionalidad Principal: [2-3 oraciones describiendo la característica principal]
 
-## 2. ESTRUCTURA DEL REQUERIMIENTO
+## 2. REQUERIMIENTOS CLAVE (Qué se necesita construir)
+
+**Características Principales:**
+- [Característica 1: Descripción clara]
+- [Característica 2: Descripción clara]
+- [Característica 3: Descripción clara]
+
+**Interacciones del Usuario:**
+- [Cómo los usuarios interactuarán con esta característica]
+
+**Resultados Esperados:**
+- [Qué debería suceder cuando la característica funcione correctamente]
+
+## 3. ESTRUCTURA DEL REQUERIMIENTO
 
 **Actores:** [Lista separada por comas]
 
@@ -334,42 +359,38 @@ Funcionalidad Principal: [2-3 oraciones describiendo la característica principa
 2. [Paso 2]
 ...
 
-**Dependencias:**
-- Técnicas: [Lista o "Ninguna identificada"]
-- De Negocio: [Lista o "Ninguna identificada"]
+## 4. CRITERIOS DE ACEPTACIÓN (Reestructurados)
 
-## 3. AMBIGÜEDADES DETECTADAS
+Organiza y clarifica los criterios de aceptación en formato Dado-Cuando-Entonces:
 
-**Críticas (Deben aclararse antes del desarrollo):**
+**Escenario 1: [Nombre]**
+- Dado: [Precondición]
+- Cuando: [Acción]
+- Entonces: [Resultado esperado]
+
+**Escenario 2: [Nombre]**
+- Dado: [Precondición]
+- Cuando: [Acción]
+- Entonces: [Resultado esperado]
+
+[Agregar más escenarios según sea necesario basándose en la historia]
+
+## 5. INFORMACIÓN FALTANTE
+
+**Brechas Críticas (Deben aclararse antes del desarrollo):**
 - [Elemento 1]
 - [Elemento 2]
-
-**Menores (Deberían aclararse pero no bloquean):**
-- [Elemento 1]
-
-**Términos Vagos que Requieren Definición:**
-- "[término]": [Por qué es vago]
-
-## 4. INFORMACIÓN FALTANTE
-
-**Brechas en Criterios de Aceptación:**
-- [Brecha específica 1]
-- [Brecha específica 2]
-
-**Casos Edge No Abordados:**
-- [Caso 1: Descripción]
-- [Caso 2: Descripción]
 
 **Requisitos No Funcionales:**
 - Rendimiento: [Qué falta o "No especificado"]
 - Seguridad: [Qué falta o "No especificado"]
 - Escalabilidad: [Qué falta o "No especificado"]
-- Accesibilidad: [Qué falta o "No especificado"]
 
-**Requisitos de Datos:**
-- [Qué datos/contexto se necesita]
+**Casos Edge a Considerar:**
+- [Caso 1: Descripción]
+- [Caso 2: Descripción]
 
-## 5. PREGUNTAS DE CLARIFICACIÓN
+## 6. PREGUNTAS DE CLARIFICACIÓN
 
 **Para el Product Owner:**
 1. [Pregunta específica sobre lógica de negocio]
@@ -386,31 +407,27 @@ Funcionalidad Principal: [2-3 oraciones describiendo la característica principa
 2. [Pregunta específica sobre manejo de errores]
 3. [Pregunta específica sobre validación]
 
-## 6. RECOMENDACIONES
+## 7. RECOMENDACIONES
 
-**Acciones Inmediatas (Antes del Desarrollo):**
-- [Acción 1 con justificación]
-- [Acción 2 con justificación]
+**Para Mejorar la Claridad:**
+- [Sugerencia 1 para hacer los requisitos más claros]
+- [Sugerencia 2 para hacer los requisitos más claros]
 
-**Mejoras de Calidad:**
-- [Mejora 1]
-- [Mejora 2]
+**Para Asegurar Completitud:**
+- [Qué debería agregarse para hacer la historia completa]
 
 **Mitigación de Riesgos:**
 - [Riesgo 1]: [Estrategia de mitigación]
 - [Riesgo 2]: [Estrategia de mitigación]
-
-**Enfoques Alternativos:**
-- [Alternativa 1]: [Cuándo considerarla]
 </formato_salida>
 
 <directrices>
 - Sé específico y accionable en todas las recomendaciones
-- Prioriza problemas críticos que bloquean el desarrollo
+- ENFÓCATE EN LO QUE ESTÁ PRESENTE: Comienza identificando y organizando claramente qué información SÍ se proporciona
+- Reestructura la información para hacerla más clara y accionable
+- Destaca los requisitos clave y la funcionalidad principal
 - Proporciona ejemplos concretos al identificar problemas
-- Enfócate en lo que falta o no está claro, no en lo que ya está claro
 - Usa viñetas para listas, listas numeradas para secuencias
-- Si algo está bien definido, reconócelo brevemente y continúa
 - Limita cada sección a los 3-5 elementos más importantes
 
 REGLAS CRÍTICAS ANTI-ALUCINACIÓN:
@@ -422,6 +439,13 @@ REGLAS CRÍTICAS ANTI-ALUCINACIÓN:
 - Si necesitas sugerir algo nuevo, márcalo claramente como "RECOMENDACIÓN" o "SUGERENCIA", no como funcionalidad existente
 - Cuando tengas dudas sobre si algo fue mencionado, NO lo incluyas - solo referencia lo que está explícitamente declarado
 - Si el story carece de información, señala lo que falta en lugar de llenar los vacíos con suposiciones
+
+ENFOQUE CONSTRUCTIVO:
+- Comienza con lo que está claro y bien definido
+- Reorganiza la información para hacerla más estructurada
+- Extrae los puntos clave y hazlos prominentes
+- Luego identifica brechas de manera útil y constructiva
+- Proporciona recomendaciones para mejorar, no solo criticar
 </directrices>
 
 <ejemplo_calidad>
