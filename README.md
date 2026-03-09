@@ -1,5 +1,7 @@
 # Story Prompt Analyzer
 
+An AI tool that analyzes user stories in Jira, identifies ambiguities or information gaps, and generates automated improvement recommendations using techniques from Prompt Engineering, applying knowledge and methodologies learned in the Prompt Engineering course.
+
 <img style="display: block; margin: 0 auto;" width="517" height="499" alt="image" src="https://github.com/user-attachments/assets/c3e64f73-3902-4ebd-8674-410379aad240" />
 
 A professional AI-powered tool for analyzing Jira user stories, identifying gaps, ambiguities, and improvement opportunities using advanced prompt engineering techniques.
