@@ -112,6 +112,8 @@ explicitly provided. DO NOT invent or assume information not present.
 
 ### Sprint Analysis Prompt
 
+<img width="1904" height="981" alt="image" src="https://github.com/user-attachments/assets/8271ad57-c906-4336-bbb8-12be721c056e" />
+
 For analyzing multiple stories together, the system uses a specialized prompt that:
 
 **Objectives:**
