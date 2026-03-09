@@ -1,17 +1,19 @@
 """Interfaz gráfica de la aplicación."""
 
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox, Menu
+from tkinter import ttk, messagebox, Menu, filedialog
 from typing import Optional
 from dotenv import load_dotenv
 import os
 import sys
+from datetime import datetime
 
 from src.jira_client import JiraClient
 from src.ai_analyzer import AIAnalyzer
 from src.settings_window import SettingsWindow
 from src.i18n import I18n
-from src.settings_window import SettingsWindow
+from src.rich_text_viewer import RichTextViewer
+from src.export_utils import ExportManager
 
 
 class StoryAnalyzerGUI:
@@ -84,7 +86,16 @@ class StoryAnalyzerGUI:
             text=self.i18n.get("analyze_button"), 
             command=self._analyze_story
         )
-        self.analyze_button.grid(row=0, column=2)
+        self.analyze_button.grid(row=0, column=2, padx=(0, 5))
+        
+        # Botón de exportar
+        self.export_button = ttk.Button(
+            input_frame,
+            text=self.i18n.get("export_button"),
+            command=self._export_analysis,
+            state="disabled"
+        )
+        self.export_button.grid(row=0, column=3)
         
         # Selector de proveedor
         ttk.Label(input_frame, text=self.i18n.get("provider_label")).grid(row=1, column=0, sticky=tk.W, padx=(0, 10), pady=(10, 0))
@@ -122,21 +133,57 @@ class StoryAnalyzerGUI:
         )
         self.model_combo.grid(row=2, column=1, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
         
+        # Campo de notas del usuario
+        ttk.Label(input_frame, text=self.i18n.get("user_notes_label")).grid(row=3, column=0, sticky=(tk.W, tk.N), padx=(0, 10), pady=(10, 0))
+        
+        self.user_notes_text = tk.Text(
+            input_frame,
+            width=30,
+            height=3,
+            font=("Segoe UI", 9),
+            wrap=tk.WORD
+        )
+        self.user_notes_text.grid(row=3, column=1, columnspan=2, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
+        
         # Frame de salida
         output_frame = ttk.LabelFrame(main_frame, text=self.i18n.get("analysis_section"), padding="10")
         output_frame.grid(row=2, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
         output_frame.columnconfigure(0, weight=1)
         output_frame.rowconfigure(0, weight=1)
         
-        # Área de texto con scroll
-        self.output_text = scrolledtext.ScrolledText(
+        # Área de texto enriquecido con scroll
+        self.output_text = RichTextViewer(
             output_frame,
-            wrap=tk.WORD,
             width=80,
-            height=30,
-            font=("Consolas", 10)
+            height=20,
+            font=("Consolas", 10),
+            bg='white',
+            fg='#2c3e50'
         )
         self.output_text.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
+        
+        # Frame de seguimiento/chat
+        followup_frame = ttk.LabelFrame(main_frame, text=self.i18n.get("followup_section"), padding="10")
+        followup_frame.grid(row=3, column=0, sticky=(tk.W, tk.E), pady=(10, 0))
+        followup_frame.columnconfigure(0, weight=1)
+        
+        # Campo de entrada para preguntas de seguimiento
+        self.followup_entry = ttk.Entry(followup_frame, width=80)
+        self.followup_entry.grid(row=0, column=0, sticky=(tk.W, tk.E), padx=(0, 10))
+        self.followup_entry.bind("<Return>", lambda e: self._send_followup())
+        
+        # Botón de enviar
+        self.followup_button = ttk.Button(
+            followup_frame,
+            text=self.i18n.get("send_button"),
+            command=self._send_followup,
+            state="disabled"
+        )
+        self.followup_button.grid(row=0, column=1)
+        
+        # Variable para mantener el historial de conversación
+        self.conversation_history = []
+        self.current_story_data = None
         
         # Barra de estado
         self.status_var = tk.StringVar(value=self.i18n.get("status_ready"))
@@ -146,7 +193,7 @@ class StoryAnalyzerGUI:
             relief=tk.SUNKEN, 
             anchor=tk.W
         )
-        status_bar.grid(row=3, column=0, sticky=(tk.W, tk.E), pady=(10, 0))
+        status_bar.grid(row=4, column=0, sticky=(tk.W, tk.E), pady=(10, 0))
 
     def _initialize_clients(self) -> None:
         """Inicializa los clientes de Jira y IA."""
@@ -202,15 +249,30 @@ class StoryAnalyzerGUI:
                 )
                 return
         
-        # Limpiar salida anterior
-        self.output_text.delete(1.0, tk.END)
+        # Limpiar salida anterior y reiniciar conversación
+        self.output_text.clear()
+        self.conversation_history = []
+        self.current_story_data = None
+        self.followup_button.config(state="disabled")
+        self.export_button.config(state="disabled")
+        
         self.status_var.set(self.i18n.get("status_fetching", story_id=story_id))
         self.analyze_button.config(state="disabled")
         self.root.update()
         
         try:
+            # Obtener notas del usuario
+            user_notes = self.user_notes_text.get("1.0", tk.END).strip()
+            
             # Obtener historia de Jira
             story_data = self.jira_client.get_user_story(story_id)
+            
+            # Agregar notas del usuario al story_data si existen
+            if user_notes:
+                story_data['user_notes'] = user_notes
+            
+            self.current_story_data = story_data
+            
             provider = self.provider_var.get()
             model = self.model_var.get()
             self.status_var.set(self.i18n.get("status_analyzing", story_id=story_id, provider=provider, model=model))
@@ -223,16 +285,29 @@ class StoryAnalyzerGUI:
             # Mostrar encabezado de la historia
             self._display_story_header(story_data)
             
+            # Acumular contenido durante streaming
+            accumulated_content = []
+            
             # Callback para actualizar UI en tiempo real
             def stream_callback(chunk: str):
-                self.output_text.insert(tk.END, chunk)
-                self.output_text.see(tk.END)
+                accumulated_content.append(chunk)
+                self.output_text.append_text(chunk, 'normal')
                 self.root.update()
             
             # Analizar con IA (con streaming)
             analysis = self.ai_analyzer.analyze_story(story_data, callback=stream_callback)
             
+            # Guardar en historial
+            self.conversation_history.append({
+                "role": "assistant",
+                "content": analysis
+            })
+            
             self.status_var.set(self.i18n.get("status_completed", story_id=story_id))
+            
+            # Habilitar campo de seguimiento
+            self.followup_button.config(state="normal")
+            self.export_button.config(state="normal")
             
         except Exception as e:
             messagebox.showerror(
@@ -259,11 +334,130 @@ Status: {story_data['status']}
 Priority: {story_data['priority']}
 
 {'='*80}
-AI ANALYSIS
-{'='*80}
 
 """
-        self.output_text.insert(tk.END, header)
+        self.output_text.append_text(header, 'normal')
+    
+    def _send_followup(self) -> None:
+        """Envía una pregunta de seguimiento a la IA."""
+        question = self.followup_entry.get().strip()
+        
+        if not question:
+            return
+        
+        if not self.current_story_data:
+            messagebox.showwarning(
+                self.i18n.get("warning"),
+                self.i18n.get("warning_no_analysis")
+            )
+            return
+        
+        # Limpiar campo de entrada
+        self.followup_entry.delete(0, tk.END)
+        
+        # Mostrar pregunta del usuario
+        self.output_text.append_text(f"\n\n{'='*80}\n", 'separator')
+        self.output_text.append_text(f"USER: {question}\n", 'user_label')
+        self.output_text.append_text(f"{'='*80}\n\n", 'separator')
+        
+        # Deshabilitar botón mientras procesa
+        self.followup_button.config(state="disabled")
+        self.status_var.set(self.i18n.get("status_processing"))
+        self.root.update()
+        
+        try:
+            # Callback para streaming
+            def stream_callback(chunk: str):
+                self.output_text.append_text(chunk, 'normal')
+                self.root.update()
+            
+            # Enviar pregunta de seguimiento
+            response = self.ai_analyzer.followup_question(
+                story_data=self.current_story_data,
+                conversation_history=self.conversation_history,
+                question=question,
+                callback=stream_callback
+            )
+            
+            # Actualizar historial
+            self.conversation_history.append({"role": "user", "content": question})
+            self.conversation_history.append({"role": "assistant", "content": response})
+            
+            self.status_var.set(self.i18n.get("status_ready"))
+            
+        except Exception as e:
+            messagebox.showerror(
+                self.i18n.get("error"),
+                self.i18n.get("error_followup", error=str(e))
+            )
+            self.status_var.set(self.i18n.get("status_error"))
+        finally:
+            self.followup_button.config(state="normal")
+    
+    def _export_analysis(self) -> None:
+        """Exporta el análisis a un archivo."""
+        if not self.current_story_data:
+            messagebox.showwarning(
+                self.i18n.get("warning"),
+                self.i18n.get("warning_no_analysis")
+            )
+            return
+        
+        # Obtener contenido del análisis
+        content = self.output_text.get_all_text()
+        
+        if not content.strip():
+            messagebox.showwarning(
+                self.i18n.get("warning"),
+                self.i18n.get("warning_empty_analysis")
+            )
+            return
+        
+        # Generar nombre de archivo sugerido
+        story_id = self.current_story_data['key'].replace('-', '_')
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        default_filename = f"analysis_{story_id}_{timestamp}"
+        
+        # Abrir diálogo para guardar archivo
+        filename = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            initialfile=default_filename,
+            filetypes=[
+                (self.i18n.get("pdf_files"), "*.pdf"),
+                (self.i18n.get("word_files"), "*.docx"),
+                (self.i18n.get("text_files"), "*.txt"),
+                (self.i18n.get("markdown_files"), "*.md"),
+                (self.i18n.get("all_files"), "*.*")
+            ],
+            title=self.i18n.get("export_title")
+        )
+        
+        if filename:
+            try:
+                # Determinar formato por extensión
+                ext = os.path.splitext(filename)[1].lower()
+                
+                if ext == '.pdf':
+                    ExportManager.export_to_pdf(content, filename, self.current_story_data['key'])
+                elif ext == '.docx':
+                    ExportManager.export_to_docx(content, filename, self.current_story_data['key'])
+                else:
+                    # Exportar como texto plano
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        f.write(content)
+                
+                messagebox.showinfo(
+                    self.i18n.get("success"),
+                    self.i18n.get("export_success", filename=os.path.basename(filename))
+                )
+                self.status_var.set(self.i18n.get("status_exported", filename=os.path.basename(filename)))
+                
+            except Exception as e:
+                messagebox.showerror(
+                    self.i18n.get("error"),
+                    self.i18n.get("error_export", error=str(e))
+                )
+                self.status_var.set(self.i18n.get("status_error"))
 
     def _display_result(self, story_data: dict, analysis: str) -> None:
         """

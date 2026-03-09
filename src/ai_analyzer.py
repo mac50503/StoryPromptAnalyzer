@@ -39,7 +39,14 @@ class AIAnalyzer:
             return self._create_english_prompt(story_data)
     
     def _create_english_prompt(self, story_data: Dict[str, Any]) -> str:
-        """Crea el prompt en inglés usando técnicas avanzadas de prompt engineering."""
+        """
+        Creates English prompt with advanced prompt engineering techniques:
+        - XML-structured prompting for better parsing
+        - Chain-of-thought reasoning (5 explicit steps)
+        - Context-aware prompting with dynamic analysis
+        - Few-shot learning with quality examples
+        - Anti-hallucination guidelines
+        """
         # Parse story components
         story_context = self._parse_story_context(story_data)
         
@@ -61,6 +68,8 @@ Labels: {', '.join(story_data['labels']) if story_data['labels'] else 'None'}
 
 <story_description>
 {story_data['description'] or 'No description provided'}
+
+{f"\\n--- ADDITIONAL CONTEXT FROM ANALYST ---\\n{story_data['user_notes']}\\n--- END OF ADDITIONAL CONTEXT ---" if story_data.get('user_notes') else ''}
 </story_description>
 
 <acceptance_criteria>
@@ -83,6 +92,7 @@ Follow this chain-of-thought approach:
    - Who is the user?
    - What do they want to accomplish?
    - Why is this valuable?
+   - Consider any additional context or notes provided by the user
 
 2. DECOMPOSE: Break down the requirement
    - What are the main components?
@@ -93,109 +103,107 @@ Follow this chain-of-thought approach:
    - What assumptions are implicit?
    - What edge cases exist?
    - What could go wrong?
+   - What questions arise from the user's notes?
 
 4. ASSESS QUALITY: Evaluate completeness
    - Are criteria SMART and testable?
    - Are non-functional requirements addressed?
    - Is the scope clear?
+   - Do the user notes highlight specific concerns?
 
 5. FORMULATE QUESTIONS: What needs clarification?
    - Business logic questions
    - Technical implementation questions
    - Testing and validation questions
+   - Questions related to user-provided context
 </analysis_methodology>
 
 <output_format>
 Provide your analysis using this exact structure:
 
 ## 1. REQUIREMENT SUMMARY
-<summary>
+
 User Story: As a [who], I want [what], so that [why]
 Business Value: [One sentence describing business impact]
 Core Functionality: [2-3 sentences describing main feature]
-</summary>
 
 ## 2. REQUIREMENT STRUCTURE
-<structure>
-Actors: [Comma-separated list]
-Main Flow:
+
+**Actors:** [Comma-separated list]
+
+**Main Flow:**
 1. [Step 1]
 2. [Step 2]
 ...
 
-Dependencies:
+**Dependencies:**
 - Technical: [List or "None identified"]
 - Business: [List or "None identified"]
-</structure>
 
 ## 3. DETECTED AMBIGUITIES
-<ambiguities>
-Critical (Must clarify before development):
+
+**Critical (Must clarify before development):**
 - [Item 1]
 - [Item 2]
 
-Minor (Should clarify but not blocking):
+**Minor (Should clarify but not blocking):**
 - [Item 1]
 
-Vague Terms Requiring Definition:
+**Vague Terms Requiring Definition:**
 - "[term]": [Why it's vague]
-</ambiguities>
 
 ## 4. MISSING INFORMATION
-<missing_info>
-Acceptance Criteria Gaps:
+
+**Acceptance Criteria Gaps:**
 - [Specific gap 1]
 - [Specific gap 2]
 
-Unaddressed Edge Cases:
+**Unaddressed Edge Cases:**
 - [Case 1: Description]
 - [Case 2: Description]
 
-Non-Functional Requirements:
+**Non-Functional Requirements:**
 - Performance: [What's missing or "Not specified"]
 - Security: [What's missing or "Not specified"]
 - Scalability: [What's missing or "Not specified"]
 - Accessibility: [What's missing or "Not specified"]
 
-Data Requirements:
+**Data Requirements:**
 - [What data/context is needed]
-</missing_info>
 
 ## 5. CLARIFICATION QUESTIONS
-<questions>
-For Product Owner:
+
+**For Product Owner:**
 1. [Specific question about business logic]
 2. [Specific question about user experience]
 3. [Specific question about priorities]
 
-For Technical Team:
+**For Technical Team:**
 1. [Specific question about implementation]
 2. [Specific question about integration]
 3. [Specific question about constraints]
 
-For QA/Testing:
+**For QA/Testing:**
 1. [Specific question about test scenarios]
 2. [Specific question about error handling]
 3. [Specific question about validation]
-</questions>
 
 ## 6. RECOMMENDATIONS
-<recommendations>
-Immediate Actions (Before Development):
+
+**Immediate Actions (Before Development):**
 - [Action 1 with rationale]
 - [Action 2 with rationale]
 
-Quality Improvements:
+**Quality Improvements:**
 - [Improvement 1]
 - [Improvement 2]
 
-Risk Mitigation:
+**Risk Mitigation:**
 - [Risk 1]: [Mitigation strategy]
 - [Risk 2]: [Mitigation strategy]
 
-Alternative Approaches:
+**Alternative Approaches:**
 - [Alternative 1]: [When to consider]
-</recommendations>
 </output_format>
 
 <guidelines>
@@ -206,10 +214,16 @@ Alternative Approaches:
 - Use bullet points for lists, numbered lists for sequences
 - If something is well-defined, acknowledge it briefly and move on
 - Limit each section to the most important 3-5 items
-- CRITICAL: Base your analysis ONLY on information explicitly provided in the story data above
-- DO NOT hallucinate or invent features, requirements, or technical details not mentioned in the story
-- When referencing functionality, use ONLY the exact terms and language from the story itself
-- If you need to suggest something, clearly mark it as a recommendation, not as existing functionality
+
+CRITICAL ANTI-HALLUCINATION RULES:
+- Base your analysis EXCLUSIVELY on information explicitly provided in the story description, acceptance criteria, comments, and analyst notes above
+- DO NOT invent, assume, or hallucinate features, requirements, technical details, or functionality not explicitly mentioned
+- When referencing functionality, use ONLY the exact terms, phrases, and language from the story itself
+- DO NOT add technical implementation details unless they are explicitly stated in the story
+- DO NOT assume technologies, frameworks, databases, or tools unless explicitly mentioned
+- If you need to suggest something new, clearly mark it as "RECOMMENDATION" or "SUGGESTION", not as existing functionality
+- When in doubt about whether something was mentioned, DO NOT include it - only reference what is explicitly stated
+- If the story lacks information, point out what's missing rather than filling in the gaps with assumptions
 </guidelines>
 
 <example_quality>
@@ -223,7 +237,14 @@ Bad: "Performance not mentioned."
         return prompt
     
     def _create_spanish_prompt(self, story_data: Dict[str, Any]) -> str:
-        """Crea el prompt en español usando técnicas avanzadas de prompt engineering."""
+        """
+        Crea el prompt en español con técnicas avanzadas de prompt engineering:
+        - XML-structured prompting para mejor parsing
+        - Chain-of-thought reasoning (5 pasos explícitos)
+        - Context-aware prompting con análisis dinámico
+        - Few-shot learning con ejemplos de calidad
+        - Anti-hallucination guidelines
+        """
         # Parse story components
         story_context = self._parse_story_context(story_data)
         
@@ -245,6 +266,8 @@ Etiquetas: {', '.join(story_data['labels']) if story_data['labels'] else 'Ningun
 
 <descripcion_historia>
 {story_data['description'] or 'No se proporcionó descripción'}
+
+{f"\\n--- CONTEXTO ADICIONAL DEL ANALISTA ---\\n{story_data['user_notes']}\\n--- FIN DEL CONTEXTO ADICIONAL ---" if story_data.get('user_notes') else ''}
 </descripcion_historia>
 
 <criterios_aceptacion>
@@ -267,6 +290,7 @@ Sigue este enfoque de razonamiento en cadena:
    - ¿Quién es el usuario?
    - ¿Qué quiere lograr?
    - ¿Por qué es valioso?
+   - Considera cualquier contexto o notas adicionales proporcionadas por el usuario
 
 2. DESCOMPONER: Desglosa el requerimiento
    - ¿Cuáles son los componentes principales?
@@ -277,109 +301,107 @@ Sigue este enfoque de razonamiento en cadena:
    - ¿Qué suposiciones son implícitas?
    - ¿Qué casos edge existen?
    - ¿Qué podría salir mal?
+   - ¿Qué preguntas surgen de las notas del usuario?
 
 4. EVALUAR CALIDAD: Evalúa la completitud
    - ¿Los criterios son SMART y verificables?
    - ¿Se abordan los requisitos no funcionales?
    - ¿El alcance está claro?
+   - ¿Las notas del usuario destacan preocupaciones específicas?
 
 5. FORMULAR PREGUNTAS: ¿Qué necesita aclaración?
    - Preguntas de lógica de negocio
    - Preguntas de implementación técnica
    - Preguntas de pruebas y validación
+   - Preguntas relacionadas con el contexto proporcionado por el usuario
 </metodologia_analisis>
 
 <formato_salida>
 Proporciona tu análisis usando esta estructura exacta:
 
 ## 1. RESUMEN DEL REQUERIMIENTO
-<resumen>
+
 Historia de Usuario: Como [quién], quiero [qué], para [por qué]
 Valor de Negocio: [Una oración describiendo el impacto de negocio]
 Funcionalidad Principal: [2-3 oraciones describiendo la característica principal]
-</resumen>
 
 ## 2. ESTRUCTURA DEL REQUERIMIENTO
-<estructura>
-Actores: [Lista separada por comas]
-Flujo Principal:
+
+**Actores:** [Lista separada por comas]
+
+**Flujo Principal:**
 1. [Paso 1]
 2. [Paso 2]
 ...
 
-Dependencias:
+**Dependencias:**
 - Técnicas: [Lista o "Ninguna identificada"]
 - De Negocio: [Lista o "Ninguna identificada"]
-</estructura>
 
 ## 3. AMBIGÜEDADES DETECTADAS
-<ambiguedades>
-Críticas (Deben aclararse antes del desarrollo):
+
+**Críticas (Deben aclararse antes del desarrollo):**
 - [Elemento 1]
 - [Elemento 2]
 
-Menores (Deberían aclararse pero no bloquean):
+**Menores (Deberían aclararse pero no bloquean):**
 - [Elemento 1]
 
-Términos Vagos que Requieren Definición:
+**Términos Vagos que Requieren Definición:**
 - "[término]": [Por qué es vago]
-</ambiguedades>
 
 ## 4. INFORMACIÓN FALTANTE
-<informacion_faltante>
-Brechas en Criterios de Aceptación:
+
+**Brechas en Criterios de Aceptación:**
 - [Brecha específica 1]
 - [Brecha específica 2]
 
-Casos Edge No Abordados:
+**Casos Edge No Abordados:**
 - [Caso 1: Descripción]
 - [Caso 2: Descripción]
 
-Requisitos No Funcionales:
+**Requisitos No Funcionales:**
 - Rendimiento: [Qué falta o "No especificado"]
 - Seguridad: [Qué falta o "No especificado"]
 - Escalabilidad: [Qué falta o "No especificado"]
 - Accesibilidad: [Qué falta o "No especificado"]
 
-Requisitos de Datos:
+**Requisitos de Datos:**
 - [Qué datos/contexto se necesita]
-</informacion_faltante>
 
 ## 5. PREGUNTAS DE CLARIFICACIÓN
-<preguntas>
-Para el Product Owner:
+
+**Para el Product Owner:**
 1. [Pregunta específica sobre lógica de negocio]
 2. [Pregunta específica sobre experiencia de usuario]
 3. [Pregunta específica sobre prioridades]
 
-Para el Equipo Técnico:
+**Para el Equipo Técnico:**
 1. [Pregunta específica sobre implementación]
 2. [Pregunta específica sobre integración]
 3. [Pregunta específica sobre restricciones]
 
-Para QA/Testing:
+**Para QA/Testing:**
 1. [Pregunta específica sobre escenarios de prueba]
 2. [Pregunta específica sobre manejo de errores]
 3. [Pregunta específica sobre validación]
-</preguntas>
 
 ## 6. RECOMENDACIONES
-<recomendaciones>
-Acciones Inmediatas (Antes del Desarrollo):
+
+**Acciones Inmediatas (Antes del Desarrollo):**
 - [Acción 1 con justificación]
 - [Acción 2 con justificación]
 
-Mejoras de Calidad:
+**Mejoras de Calidad:**
 - [Mejora 1]
 - [Mejora 2]
 
-Mitigación de Riesgos:
+**Mitigación de Riesgos:**
 - [Riesgo 1]: [Estrategia de mitigación]
 - [Riesgo 2]: [Estrategia de mitigación]
 
-Enfoques Alternativos:
+**Enfoques Alternativos:**
 - [Alternativa 1]: [Cuándo considerarla]
-</recomendaciones>
 </formato_salida>
 
 <directrices>
@@ -390,10 +412,16 @@ Enfoques Alternativos:
 - Usa viñetas para listas, listas numeradas para secuencias
 - Si algo está bien definido, reconócelo brevemente y continúa
 - Limita cada sección a los 3-5 elementos más importantes
-- CRÍTICO: Basa tu análisis ÚNICAMENTE en la información explícitamente proporcionada en los datos de la historia
-- NO alucines ni inventes características, requisitos o detalles técnicos que no se mencionan en la historia
-- Al referenciar funcionalidad, usa ÚNICAMENTE los términos exactos y el lenguaje de la historia misma
-- Si necesitas sugerir algo, márcalo claramente como una recomendación, no como funcionalidad existente
+
+REGLAS CRÍTICAS ANTI-ALUCINACIÓN:
+- Basa tu análisis EXCLUSIVAMENTE en la información explícitamente proporcionada en la descripción del story, criterios de aceptación, comentarios y notas del analista
+- NO inventes, asumas o alucines características, requisitos, detalles técnicos o funcionalidad que no estén explícitamente mencionados
+- Al referenciar funcionalidad, usa ÚNICAMENTE los términos exactos, frases y lenguaje del story mismo
+- NO agregues detalles de implementación técnica a menos que estén explícitamente declarados en el story
+- NO asumas tecnologías, frameworks, bases de datos o herramientas a menos que estén explícitamente mencionadas
+- Si necesitas sugerir algo nuevo, márcalo claramente como "RECOMENDACIÓN" o "SUGERENCIA", no como funcionalidad existente
+- Cuando tengas dudas sobre si algo fue mencionado, NO lo incluyas - solo referencia lo que está explícitamente declarado
+- Si el story carece de información, señala lo que falta en lugar de llenar los vacíos con suposiciones
 </directrices>
 
 <ejemplo_calidad>
@@ -506,9 +534,71 @@ Malo: "No se menciona el rendimiento."
         except Exception as e:
             raise Exception(f"Error al analizar la historia: {str(e)}")
     
+    def followup_question(self, story_data: Dict[str, Any], conversation_history: list, question: str, callback=None) -> str:
+        """
+        Procesa una pregunta de seguimiento sobre el análisis.
+        
+        Args:
+            story_data: Datos originales de la historia
+            conversation_history: Historial de la conversación
+            question: Pregunta del usuario
+            callback: Función opcional para recibir chunks en tiempo real
+            
+        Returns:
+            Respuesta de la IA
+        """
+        try:
+            # Construir contexto para la pregunta de seguimiento
+            system_role = self._get_system_role()
+            
+            # Crear contexto de la historia
+            story_context = f"""Story ID: {story_data['key']}
+Title: {story_data['title']}
+Description: {story_data.get('description', 'N/A')}
+Acceptance Criteria: {story_data.get('acceptance_criteria', 'N/A')}"""
+            
+            # Construir mensajes
+            messages = [
+                {"role": "system", "content": system_role},
+                {"role": "system", "content": f"Context - You are discussing this user story:\n\n{story_context}"}
+            ]
+            
+            # Agregar historial de conversación
+            messages.extend(conversation_history)
+            
+            # Agregar pregunta actual
+            messages.append({"role": "user", "content": question})
+            
+            response = completion(
+                model=self.model,
+                messages=messages,
+                temperature=0.2,
+                max_tokens=1200,
+                stream=True
+            )
+            
+            # Recolectar el contenido del stream
+            full_content = ""
+            for chunk in response:
+                if hasattr(chunk, 'choices') and len(chunk.choices) > 0:
+                    delta = chunk.choices[0].delta
+                    if hasattr(delta, 'content') and delta.content:
+                        full_content += delta.content
+                        if callback:
+                            callback(delta.content)
+            
+            return full_content
+            
+        except Exception as e:
+            raise Exception(f"Error processing follow-up question: {str(e)}")
+    
     def _get_system_role(self) -> str:
         """Obtiene el rol del sistema según el idioma."""
         if self.language == "es":
-            return "Eres un arquitecto de software senior y un ingeniero de QA especializado en analizar historias de usuario de Jira e identificar requisitos faltantes y casos de prueba. Antes de producir la respuesta final, razona cuidadosamente sobre los requisitos y posibles ambigüedades."
+            return """Eres un arquitecto de software senior y un ingeniero de QA especializado en analizar historias de usuario de Jira e identificar requisitos faltantes y casos de prueba. 
+
+REGLA CRÍTICA: Antes de producir la respuesta final, razona cuidadosamente sobre los requisitos y posibles ambigüedades. Basa tu análisis ÚNICAMENTE en la información explícitamente proporcionada en el story. NO inventes, asumas o agregues información que no esté presente en el texto. Usa SOLO los términos y conceptos mencionados en el story y las notas del analista."""
         else:
-            return "You are a senior software architect and QA engineer specialized in analyzing Jira user stories and identifying missing requirements and test cases. Before producing the final answer, carefully reason about the requirements and possible ambiguities."
+            return """You are a senior software architect and QA engineer specialized in analyzing Jira user stories and identifying missing requirements and test cases. 
+
+CRITICAL RULE: Before producing the final answer, carefully reason about the requirements and possible ambiguities. Base your analysis EXCLUSIVELY on information explicitly provided in the story. DO NOT invent, assume, or add information that is not present in the text. Use ONLY the terms and concepts mentioned in the story and analyst notes."""
