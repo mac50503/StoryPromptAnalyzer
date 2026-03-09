@@ -162,6 +162,7 @@ Built with Kiro AI Assistant. Contributions welcome via Pull Requests.
 **Miguel Angel Cervantes Juarez**
 - Software Architect
 - GitHub: [@mac50503](https://github.com/mac50503)
+- LinkedIn: [Miguel Angel Cervantes Juárez](https://www.linkedin.com/in/miguel-angel-cervantes-ju%C3%A1rez-40a52345)
 
 ## 📄 License
 
