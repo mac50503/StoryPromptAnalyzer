@@ -103,21 +103,24 @@ class StoryAnalyzerGUI:
         # Selector de modelo
         ttk.Label(input_frame, text=self.i18n.get("model_label")).grid(row=2, column=0, sticky=tk.W, padx=(0, 10), pady=(10, 0))
         
-        self.model_var = tk.StringVar(value="gpt-4")
-        self.model_combo = ttk.Combobox(
-            input_frame, 
-            textvariable=self.model_var,
-            values=["gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"],
-            state="readonly",
-            width=28
-        )
-        self.model_combo.grid(row=2, column=1, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
-        
         # Modelos por proveedor
         self.models_by_provider = {
             "OpenAI": ["gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"],
             "Anthropic": ["claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"]
         }
+        
+        # Obtener modelo por defecto del .env
+        default_model = os.getenv("AI_MODEL", "gpt-4-turbo")
+        
+        self.model_var = tk.StringVar(value=default_model)
+        self.model_combo = ttk.Combobox(
+            input_frame, 
+            textvariable=self.model_var,
+            values=self.models_by_provider["OpenAI"],
+            state="readonly",
+            width=28
+        )
+        self.model_combo.grid(row=2, column=1, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
         
         # Frame de salida
         output_frame = ttk.LabelFrame(main_frame, text=self.i18n.get("analysis_section"), padding="10")
@@ -187,7 +190,10 @@ class StoryAnalyzerGUI:
                 self.status_var.set(self.i18n.get("status_connecting"))
                 self.root.update()
                 self.jira_client = JiraClient.from_env()
-                self.ai_analyzer = AIAnalyzer(model=self._get_full_model_name())
+                self.ai_analyzer = AIAnalyzer(
+                    model=self._get_full_model_name(),
+                    language=self.i18n.language
+                )
             except Exception as e:
                 self.status_var.set(self.i18n.get("status_error"))
                 messagebox.showerror(
@@ -212,12 +218,20 @@ class StoryAnalyzerGUI:
             
             # Actualizar modelo si cambió
             self.ai_analyzer.model = self._get_full_model_name()
+            self.ai_analyzer.language = self.i18n.language
             
-            # Analizar con IA
-            analysis = self.ai_analyzer.analyze_story(story_data)
+            # Mostrar encabezado de la historia
+            self._display_story_header(story_data)
             
-            # Mostrar resultado
-            self._display_result(story_data, analysis)
+            # Callback para actualizar UI en tiempo real
+            def stream_callback(chunk: str):
+                self.output_text.insert(tk.END, chunk)
+                self.output_text.see(tk.END)
+                self.root.update()
+            
+            # Analizar con IA (con streaming)
+            analysis = self.ai_analyzer.analyze_story(story_data, callback=stream_callback)
+            
             self.status_var.set(self.i18n.get("status_completed", story_id=story_id))
             
         except Exception as e:
@@ -228,6 +242,28 @@ class StoryAnalyzerGUI:
             self.status_var.set(self.i18n.get("status_error"))
         finally:
             self.analyze_button.config(state="normal")
+    
+    def _display_story_header(self, story_data: dict) -> None:
+        """
+        Muestra el encabezado de la historia.
+        
+        Args:
+            story_data: Datos de la historia
+        """
+        header = f"""{'='*80}
+USER STORY: {story_data['key']}
+{'='*80}
+
+Title: {story_data['title']}
+Status: {story_data['status']}
+Priority: {story_data['priority']}
+
+{'='*80}
+AI ANALYSIS
+{'='*80}
+
+"""
+        self.output_text.insert(tk.END, header)
 
     def _display_result(self, story_data: dict, analysis: str) -> None:
         """
