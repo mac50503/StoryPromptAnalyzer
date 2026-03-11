@@ -119,131 +119,121 @@ Follow this chain-of-thought approach:
 </analysis_methodology>
 
 <output_format>
-Provide your analysis using this exact structure:
+Provide a concise, actionable analysis using this exact structure:
 
-## 1. REQUIREMENT SUMMARY
+## 1. QUICK SUMMARY
 
-User Story: As a [who], I want [what], so that [why]
-Business Value: [One sentence describing business impact]
-Core Functionality: [2-3 sentences describing main feature]
+**User Story:** As a [who], I want [what], so that [why]
+**Business Value:** [One sentence - why this matters]
+**Complexity:** [Low/Medium/High] - [Brief justification]
 
-## 2. KEY REQUIREMENTS (What needs to be built)
+## 2. WHAT TO BUILD
 
 **Core Features:**
-- [Feature 1: Clear description]
-- [Feature 2: Clear description]
-- [Feature 3: Clear description]
+- [Feature 1: Clear, specific description]
+- [Feature 2: Clear, specific description]
+- [Feature 3: Clear, specific description]
 
-**User Interactions:**
-- [How users will interact with this feature]
+**Key User Interactions:**
+- [How users will interact - be specific]
 
-**Expected Outcomes:**
-- [What should happen when feature works correctly]
+**Expected Outcome:**
+- [What should happen when it works correctly]
 
-## 3. REQUIREMENT STRUCTURE
+## 3. CRITICAL GAPS
 
-**Actors:** [Comma-separated list]
+**❌ Blockers (Must resolve before starting):**
+- [Critical missing information that prevents development]
+- [Another blocker if exists, otherwise "None identified"]
 
-**Main Flow:**
-1. [Step 1]
-2. [Step 2]
-...
+**⚠️ Risks (Could cause problems):**
+- [Risk 1]: [Why it's a risk]
+- [Risk 2]: [Why it's a risk]
 
-## 4. ACCEPTANCE CRITERIA (Restructured)
+**ℹ️ Key Questions:**
+1. [Specific question for Product Owner]
+2. [Specific question for Technical Team]
+3. [Specific question about edge cases/validation]
 
-Organize and clarify the acceptance criteria in Given-When-Then format:
+## 4. TECHNICAL TASKS
 
-**Scenario 1: [Name]**
-- Given: [Precondition]
-- When: [Action]
-- Then: [Expected result]
+**Backend:**
+- [ ] [Task 1: Specific backend task]
+- [ ] [Task 2: Specific backend task]
 
-**Scenario 2: [Name]**
-- Given: [Precondition]
-- When: [Action]
-- Then: [Expected result]
+**Frontend:**
+- [ ] [Task 1: Specific frontend task]
+- [ ] [Task 2: Specific frontend task]
 
-[Add more scenarios as needed based on the story]
+**Database:**
+- [ ] [Task 1: Specific database task]
+- [ ] [Task 2: Specific database task]
 
-## 5. MISSING INFORMATION
+**Testing:**
+- [ ] [Task 1: Specific testing task]
+- [ ] [Task 2: Specific testing task]
 
-**Critical Gaps (Must clarify before development):**
-- [Item 1]
-- [Item 2]
+**DevOps/Infrastructure:**
+- [ ] [Task 1: If applicable, otherwise "Not applicable"]
 
-**Non-Functional Requirements:**
-- Performance: [What's missing or "Not specified"]
-- Security: [What's missing or "Not specified"]
-- Scalability: [What's missing or "Not specified"]
-
-**Edge Cases to Consider:**
-- [Case 1: Description]
-- [Case 2: Description]
-
-## 6. CLARIFICATION QUESTIONS
+## 5. NEXT STEPS
 
 **For Product Owner:**
-1. [Specific question about business logic]
-2. [Specific question about user experience]
-3. [Specific question about priorities]
+- [ ] [Specific action item 1]
+- [ ] [Specific action item 2]
 
-**For Technical Team:**
-1. [Specific question about implementation]
-2. [Specific question about integration]
-3. [Specific question about constraints]
+**For Dev Team:**
+- [ ] [Specific action item 1]
+- [ ] [Specific action item 2]
 
-**For QA/Testing:**
-1. [Specific question about test scenarios]
-2. [Specific question about error handling]
-3. [Specific question about validation]
-
-## 7. RECOMMENDATIONS
-
-**To Improve Clarity:**
-- [Suggestion 1 to make requirements clearer]
-- [Suggestion 2 to make requirements clearer]
-
-**To Ensure Completeness:**
-- [What should be added to make story complete]
-
-**Risk Mitigation:**
-- [Risk 1]: [Mitigation strategy]
-- [Risk 2]: [Mitigation strategy]
+**Ready to Start?** [YES/NO]
+- [If NO: Brief reason why not ready]
+- [If YES: Any important considerations before starting]
 </output_format>
 
 <guidelines>
-- Be specific and actionable in all recommendations
-- FOCUS ON WHAT'S PRESENT: Start by clearly identifying and organizing what information IS provided
-- Restructure information to make it clearer and more actionable
-- Highlight key requirements and core functionality
-- Provide concrete examples when identifying problems
-- Use bullet points for lists, numbered lists for sequences
-- Limit each section to the most important 3-5 items
+- Be CONCISE - each section should be scannable in seconds
+- Focus on ACTIONABLE information only
+- Use bullet points, not paragraphs
+- Limit to 3-5 items per section (only the most important)
+- Be SPECIFIC - avoid vague statements
+- Prioritize what blocks or risks development
+- Questions should be answerable and specific
+- Technical tasks should be CONCRETE and IMPLEMENTABLE
+- Each task should be small enough to complete in 1-4 hours
+- Tasks should follow a logical implementation order
 
 CRITICAL ANTI-HALLUCINATION RULES:
-- Base your analysis EXCLUSIVELY on information explicitly provided in the story description, acceptance criteria, comments, and analyst notes above
-- DO NOT invent, assume, or hallucinate features, requirements, technical details, or functionality not explicitly mentioned
-- When referencing functionality, use ONLY the exact terms, phrases, and language from the story itself
-- DO NOT add technical implementation details unless they are explicitly stated in the story
-- DO NOT assume technologies, frameworks, databases, or tools unless explicitly mentioned
-- If you need to suggest something new, clearly mark it as "RECOMMENDATION" or "SUGGESTION", not as existing functionality
-- When in doubt about whether something was mentioned, DO NOT include it - only reference what is explicitly stated
-- If the story lacks information, point out what's missing rather than filling in the gaps with assumptions
+- Base analysis EXCLUSIVELY on information explicitly provided in the story
+- DO NOT invent features, requirements, or technical details not mentioned
+- Use ONLY exact terms and language from the story itself
+- If suggesting something new, clearly mark it as "RECOMMENDATION"
+- When in doubt, point out what's missing rather than filling gaps with assumptions
+- Technical tasks must be based ONLY on explicitly mentioned functionality
 
 CONSTRUCTIVE APPROACH:
 - Start with what's clear and well-defined
-- Reorganize information to make it more structured
 - Extract key points and make them prominent
-- Then identify gaps in a helpful, constructive manner
-- Provide recommendations to improve, not just criticize
+- Identify gaps in a helpful, specific manner
+- Provide actionable next steps, not just criticism
+- Break down work into concrete, implementable tasks
 </guidelines>
 
 <example_quality>
-Good: "The error handling for invalid user input is not specified. What should happen if the user enters a negative quantity?"
+Good Technical Task: "[ ] Create POST /api/users endpoint with email validation"
+Bad Technical Task: "[ ] Implement user functionality"
+
+Good Technical Task: "[ ] Add user_email column to users table with unique constraint"
+Bad Technical Task: "[ ] Update database"
+
+Good: "❌ Blocker: Error handling not specified. What should happen if payment gateway times out?"
 Bad: "Error handling needs work."
 
-Good: "Performance requirement missing: What is the acceptable response time for search queries with 10,000+ results?"
+Good: "⚠️ Risk: No performance requirements. With 10k+ users, response time could be unacceptable."
 Bad: "Performance not mentioned."
+
+Good: "For Product Owner: [ ] Define maximum file upload size and supported formats"
+Bad: "Clarify requirements"
 </example_quality>"""
 
         return prompt
@@ -329,131 +319,121 @@ Sigue este enfoque de razonamiento en cadena:
 </metodologia_analisis>
 
 <formato_salida>
-Proporciona tu análisis usando esta estructura exacta:
+Proporciona un análisis conciso y accionable usando esta estructura exacta:
 
-## 1. RESUMEN DEL REQUERIMIENTO
+## 1. RESUMEN RÁPIDO
 
-Historia de Usuario: Como [quién], quiero [qué], para [por qué]
-Valor de Negocio: [Una oración describiendo el impacto de negocio]
-Funcionalidad Principal: [2-3 oraciones describiendo la característica principal]
+**Historia de Usuario:** Como [quién], quiero [qué], para [por qué]
+**Valor de Negocio:** [Una oración - por qué esto importa]
+**Complejidad:** [Baja/Media/Alta] - [Breve justificación]
 
-## 2. REQUERIMIENTOS CLAVE (Qué se necesita construir)
+## 2. QUÉ CONSTRUIR
 
 **Características Principales:**
-- [Característica 1: Descripción clara]
-- [Característica 2: Descripción clara]
-- [Característica 3: Descripción clara]
+- [Característica 1: Descripción clara y específica]
+- [Característica 2: Descripción clara y específica]
+- [Característica 3: Descripción clara y específica]
 
-**Interacciones del Usuario:**
-- [Cómo los usuarios interactuarán con esta característica]
+**Interacciones Clave del Usuario:**
+- [Cómo los usuarios interactuarán - ser específico]
 
-**Resultados Esperados:**
-- [Qué debería suceder cuando la característica funcione correctamente]
+**Resultado Esperado:**
+- [Qué debería suceder cuando funcione correctamente]
 
-## 3. ESTRUCTURA DEL REQUERIMIENTO
+## 3. BRECHAS CRÍTICAS
 
-**Actores:** [Lista separada por comas]
+**❌ Bloqueadores (Deben resolverse antes de empezar):**
+- [Información crítica faltante que impide el desarrollo]
+- [Otro bloqueador si existe, sino "Ninguno identificado"]
 
-**Flujo Principal:**
-1. [Paso 1]
-2. [Paso 2]
-...
+**⚠️ Riesgos (Podrían causar problemas):**
+- [Riesgo 1]: [Por qué es un riesgo]
+- [Riesgo 2]: [Por qué es un riesgo]
 
-## 4. CRITERIOS DE ACEPTACIÓN (Reestructurados)
+**ℹ️ Preguntas Clave:**
+1. [Pregunta específica para Product Owner]
+2. [Pregunta específica para Equipo Técnico]
+3. [Pregunta específica sobre casos edge/validación]
 
-Organiza y clarifica los criterios de aceptación en formato Dado-Cuando-Entonces:
+## 4. TAREAS TÉCNICAS
 
-**Escenario 1: [Nombre]**
-- Dado: [Precondición]
-- Cuando: [Acción]
-- Entonces: [Resultado esperado]
+**Backend:**
+- [ ] [Tarea 1: Tarea específica de backend]
+- [ ] [Tarea 2: Tarea específica de backend]
 
-**Escenario 2: [Nombre]**
-- Dado: [Precondición]
-- Cuando: [Acción]
-- Entonces: [Resultado esperado]
+**Frontend:**
+- [ ] [Tarea 1: Tarea específica de frontend]
+- [ ] [Tarea 2: Tarea específica de frontend]
 
-[Agregar más escenarios según sea necesario basándose en la historia]
+**Base de Datos:**
+- [ ] [Tarea 1: Tarea específica de base de datos]
+- [ ] [Tarea 2: Tarea específica de base de datos]
 
-## 5. INFORMACIÓN FALTANTE
+**Testing:**
+- [ ] [Tarea 1: Tarea específica de testing]
+- [ ] [Tarea 2: Tarea específica de testing]
 
-**Brechas Críticas (Deben aclararse antes del desarrollo):**
-- [Elemento 1]
-- [Elemento 2]
+**DevOps/Infraestructura:**
+- [ ] [Tarea 1: Si aplica, sino "No aplica"]
 
-**Requisitos No Funcionales:**
-- Rendimiento: [Qué falta o "No especificado"]
-- Seguridad: [Qué falta o "No especificado"]
-- Escalabilidad: [Qué falta o "No especificado"]
-
-**Casos Edge a Considerar:**
-- [Caso 1: Descripción]
-- [Caso 2: Descripción]
-
-## 6. PREGUNTAS DE CLARIFICACIÓN
+## 5. PRÓXIMOS PASOS
 
 **Para el Product Owner:**
-1. [Pregunta específica sobre lógica de negocio]
-2. [Pregunta específica sobre experiencia de usuario]
-3. [Pregunta específica sobre prioridades]
+- [ ] [Acción específica 1]
+- [ ] [Acción específica 2]
 
-**Para el Equipo Técnico:**
-1. [Pregunta específica sobre implementación]
-2. [Pregunta específica sobre integración]
-3. [Pregunta específica sobre restricciones]
+**Para el Equipo de Desarrollo:**
+- [ ] [Acción específica 1]
+- [ ] [Acción específica 2]
 
-**Para QA/Testing:**
-1. [Pregunta específica sobre escenarios de prueba]
-2. [Pregunta específica sobre manejo de errores]
-3. [Pregunta específica sobre validación]
-
-## 7. RECOMENDACIONES
-
-**Para Mejorar la Claridad:**
-- [Sugerencia 1 para hacer los requisitos más claros]
-- [Sugerencia 2 para hacer los requisitos más claros]
-
-**Para Asegurar Completitud:**
-- [Qué debería agregarse para hacer la historia completa]
-
-**Mitigación de Riesgos:**
-- [Riesgo 1]: [Estrategia de mitigación]
-- [Riesgo 2]: [Estrategia de mitigación]
+**¿Listo para Empezar?** [SÍ/NO]
+- [Si NO: Breve razón por qué no está listo]
+- [Si SÍ: Consideraciones importantes antes de empezar]
 </formato_salida>
 
 <directrices>
-- Sé específico y accionable en todas las recomendaciones
-- ENFÓCATE EN LO QUE ESTÁ PRESENTE: Comienza identificando y organizando claramente qué información SÍ se proporciona
-- Reestructura la información para hacerla más clara y accionable
-- Destaca los requisitos clave y la funcionalidad principal
-- Proporciona ejemplos concretos al identificar problemas
-- Usa viñetas para listas, listas numeradas para secuencias
-- Limita cada sección a los 3-5 elementos más importantes
+- Sé CONCISO - cada sección debe ser escaneable en segundos
+- Enfócate en información ACCIONABLE solamente
+- Usa viñetas, no párrafos
+- Limita a 3-5 elementos por sección (solo lo más importante)
+- Sé ESPECÍFICO - evita declaraciones vagas
+- Prioriza lo que bloquea o arriesga el desarrollo
+- Las preguntas deben ser respondibles y específicas
+- Las tareas técnicas deben ser CONCRETAS e IMPLEMENTABLES
+- Cada tarea debe ser lo suficientemente pequeña para completarse en 1-4 horas
+- Las tareas deben seguir un orden lógico de implementación
 
 REGLAS CRÍTICAS ANTI-ALUCINACIÓN:
-- Basa tu análisis EXCLUSIVAMENTE en la información explícitamente proporcionada en la descripción del story, criterios de aceptación, comentarios y notas del analista
-- NO inventes, asumas o alucines características, requisitos, detalles técnicos o funcionalidad que no estén explícitamente mencionados
-- Al referenciar funcionalidad, usa ÚNICAMENTE los términos exactos, frases y lenguaje del story mismo
-- NO agregues detalles de implementación técnica a menos que estén explícitamente declarados en el story
-- NO asumas tecnologías, frameworks, bases de datos o herramientas a menos que estén explícitamente mencionadas
-- Si necesitas sugerir algo nuevo, márcalo claramente como "RECOMENDACIÓN" o "SUGERENCIA", no como funcionalidad existente
-- Cuando tengas dudas sobre si algo fue mencionado, NO lo incluyas - solo referencia lo que está explícitamente declarado
-- Si el story carece de información, señala lo que falta en lugar de llenar los vacíos con suposiciones
+- Basa el análisis EXCLUSIVAMENTE en información explícitamente proporcionada en la historia
+- NO inventes características, requisitos o detalles técnicos no mencionados
+- Usa ÚNICAMENTE términos exactos y lenguaje de la historia misma
+- Si sugieres algo nuevo, márcalo claramente como "RECOMENDACIÓN"
+- Cuando tengas dudas, señala lo que falta en lugar de llenar vacíos con suposiciones
+- Las tareas técnicas deben basarse SOLO en funcionalidad explícitamente mencionada
 
 ENFOQUE CONSTRUCTIVO:
 - Comienza con lo que está claro y bien definido
-- Reorganiza la información para hacerla más estructurada
-- Extrae los puntos clave y hazlos prominentes
-- Luego identifica brechas de manera útil y constructiva
-- Proporciona recomendaciones para mejorar, no solo criticar
+- Extrae puntos clave y hazlos prominentes
+- Identifica brechas de manera útil y específica
+- Proporciona próximos pasos accionables, no solo críticas
+- Descompone el trabajo en tareas concretas e implementables
 </directrices>
 
 <ejemplo_calidad>
-Bueno: "El manejo de errores para entrada de usuario inválida no está especificado. ¿Qué debería suceder si el usuario ingresa una cantidad negativa?"
+Buena Tarea Técnica: "[ ] Crear endpoint POST /api/usuarios con validación de email"
+Mala Tarea Técnica: "[ ] Implementar funcionalidad de usuario"
+
+Buena Tarea Técnica: "[ ] Agregar columna email_usuario a tabla usuarios con constraint unique"
+Mala Tarea Técnica: "[ ] Actualizar base de datos"
+
+Bueno: "❌ Bloqueador: Manejo de errores no especificado. ¿Qué debería suceder si el gateway de pago expira?"
 Malo: "El manejo de errores necesita trabajo."
 
-Bueno: "Falta requisito de rendimiento: ¿Cuál es el tiempo de respuesta aceptable para consultas de búsqueda con más de 10,000 resultados?"
+Bueno: "⚠️ Riesgo: Sin requisitos de rendimiento. Con 10k+ usuarios, el tiempo de respuesta podría ser inaceptable."
 Malo: "No se menciona el rendimiento."
+
+Bueno: "Para Product Owner: [ ] Definir tamaño máximo de archivo y formatos soportados"
+Malo: "Aclarar requisitos"
 </ejemplo_calidad>"""
 
         return prompt
