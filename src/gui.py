@@ -276,6 +276,15 @@ class StoryAnalyzerGUI:
         self.story_ids_text.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(0, 10))
         self.story_ids_text.insert("1.0", "PROJ-123, PROJ-124, PROJ-125")
         
+        # Checkbox para incluir child issues
+        self.include_children_var = tk.BooleanVar(value=False)
+        self.include_children_check = ttk.Checkbutton(
+            sprint_input_frame,
+            text=self.i18n.get("include_children_label"),
+            variable=self.include_children_var
+        )
+        self.include_children_check.grid(row=1, column=1, sticky=tk.W, pady=(5, 0))
+        
         # Botón de análisis de sprint
         self.analyze_sprint_button = ttk.Button(
             sprint_input_frame, 
@@ -294,7 +303,7 @@ class StoryAnalyzerGUI:
         self.export_sprint_button.grid(row=0, column=3, sticky=tk.N)
         
         # Selector de proveedor
-        ttk.Label(sprint_input_frame, text=self.i18n.get("provider_label")).grid(row=1, column=0, sticky=tk.W, padx=(0, 10), pady=(10, 0))
+        ttk.Label(sprint_input_frame, text=self.i18n.get("provider_label")).grid(row=2, column=0, sticky=tk.W, padx=(0, 10), pady=(10, 0))
         
         # Usar las mismas variables que el tab single story
         sprint_provider_combo = ttk.Combobox(
@@ -304,11 +313,11 @@ class StoryAnalyzerGUI:
             state="readonly",
             width=28
         )
-        sprint_provider_combo.grid(row=1, column=1, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
+        sprint_provider_combo.grid(row=2, column=1, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
         sprint_provider_combo.bind("<<ComboboxSelected>>", self._on_provider_change)
         
         # Selector de modelo
-        ttk.Label(sprint_input_frame, text=self.i18n.get("model_label")).grid(row=2, column=0, sticky=tk.W, padx=(0, 10), pady=(10, 0))
+        ttk.Label(sprint_input_frame, text=self.i18n.get("model_label")).grid(row=3, column=0, sticky=tk.W, padx=(0, 10), pady=(10, 0))
         
         self.sprint_model_combo = ttk.Combobox(
             sprint_input_frame, 
@@ -317,7 +326,7 @@ class StoryAnalyzerGUI:
             state="readonly",
             width=28
         )
-        self.sprint_model_combo.grid(row=2, column=1, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
+        self.sprint_model_combo.grid(row=3, column=1, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
         
         # Frame de salida
         sprint_output_frame = ttk.LabelFrame(self.sprint_tab, text=self.i18n.get("analysis_section"), padding="10")
@@ -1052,10 +1061,10 @@ Priority: {story_data['priority']}
         story_ids = re.split(r'[,\s\n]+', story_ids_text)
         story_ids = [sid.strip() for sid in story_ids if sid.strip()]
         
-        if len(story_ids) < 2:
+        if len(story_ids) < 1:
             messagebox.showwarning(
                 self.i18n.get("warning"),
-                "Please enter at least 2 Story IDs for sprint analysis"
+                "Please enter at least 1 Story ID for sprint analysis"
             )
             return
         
@@ -1082,14 +1091,46 @@ Priority: {story_data['priority']}
         self.current_sprint_data = None
         self.export_sprint_button.config(state="disabled")
         
-        self.status_var.set(self.i18n.get("status_fetching_multiple", count=len(story_ids)))
+        # Si está marcado "Include child issues", expandir la lista
+        all_story_ids = []
+        if self.include_children_var.get():
+            self.status_var.set(self.i18n.get("status_fetching_children"))
+            self.root.update()
+            
+            for parent_id in story_ids:
+                all_story_ids.append(parent_id)
+                try:
+                    children = self.jira_client.get_child_issues(parent_id)
+                    if children:
+                        self.sprint_output_text.append_text(
+                            f"📋 Found {len(children)} child issues for {parent_id}: {', '.join(children)}\n\n",
+                            'normal'
+                        )
+                        all_story_ids.extend(children)
+                except Exception as e:
+                    self.sprint_output_text.append_text(
+                        f"⚠️ Warning: Could not fetch children for {parent_id}: {str(e)}\n\n",
+                        'normal'
+                    )
+        else:
+            all_story_ids = story_ids
+        
+        # Remover duplicados manteniendo el orden
+        seen = set()
+        unique_story_ids = []
+        for sid in all_story_ids:
+            if sid not in seen:
+                seen.add(sid)
+                unique_story_ids.append(sid)
+        
+        self.status_var.set(self.i18n.get("status_fetching_multiple", count=len(unique_story_ids)))
         self.analyze_sprint_button.config(state="disabled")
         self.root.update()
         
         try:
             # Obtener todas las historias de Jira
             stories_data = []
-            for story_id in story_ids:
+            for story_id in unique_story_ids:
                 try:
                     story_data = self.jira_client.get_user_story(story_id)
                     stories_data.append(story_data)

@@ -195,20 +195,57 @@ class JiraClient:
             return True
         except Exception as e:
             raise Exception(f"Error posting comment to {story_key}: {str(e)}")
-    def post_comment(self, story_key: str, comment_text: str) -> bool:
+    
+    def get_child_issues(self, parent_key: str) -> list[str]:
         """
-        Publica un comentario en una historia de Jira.
-
+        Obtiene todos los child issues (subtareas, historias hijas) de un issue padre.
+        Útil para analizar un Epic completo con todas sus historias.
+        
         Args:
-            story_key: Clave de la historia (ej: PROJ-123)
-            comment_text: Texto del comentario a publicar
-
+            parent_key: Clave del issue padre (ej: EPIC-123)
+            
         Returns:
-            True si se publicó exitosamente, False en caso contrario
+            Lista de claves de los child issues (ej: ['PROJ-123', 'PROJ-124'])
         """
         try:
-            self.jira.add_comment(story_key, comment_text)
-            return True
+            parent_issue = self.jira.issue(parent_key)
+            child_keys = []
+            
+            # Obtener subtasks (subtareas directas)
+            if hasattr(parent_issue.fields, 'subtasks') and parent_issue.fields.subtasks:
+                for subtask in parent_issue.fields.subtasks:
+                    child_keys.append(subtask.key)
+            
+            # Obtener issues que tienen este como parent (para Epics)
+            # Buscar usando JQL: parent = EPIC-123
+            try:
+                jql = f'parent = {parent_key}'
+                child_issues = self.jira.search_issues(jql, maxResults=100)
+                for issue in child_issues:
+                    if issue.key not in child_keys:
+                        child_keys.append(issue.key)
+            except:
+                pass
+            
+            # También buscar por Epic Link (campo común en Jira)
+            try:
+                # Intentar con diferentes campos de Epic Link
+                epic_link_fields = ['customfield_10014', 'customfield_10008', 'customfield_10100']
+                for field in epic_link_fields:
+                    try:
+                        jql = f'"{field}" = {parent_key}'
+                        epic_issues = self.jira.search_issues(jql, maxResults=100)
+                        for issue in epic_issues:
+                            if issue.key not in child_keys:
+                                child_keys.append(issue.key)
+                        break  # Si funciona, no intentar otros campos
+                    except:
+                        continue
+            except:
+                pass
+            
+            return child_keys
+            
         except Exception as e:
-            raise Exception(f"Error posting comment to {story_key}: {str(e)}")
+            raise Exception(f"Error getting child issues for {parent_key}: {str(e)}")
 
