@@ -2,14 +2,13 @@
 
 An AI tool that analyzes user stories in Jira, identifies ambiguities or information gaps, and generates automated improvement recommendations using techniques from Prompt Engineering, applying knowledge and methodologies learned in the Prompt Engineering course.
 
-<img width="1348" height="999" alt="image" src="https://github.com/user-attachments/assets/1c80c466-dd61-4466-9c5d-26d7fa0ba2c0" />
+<img width="1345" height="1005" alt="image" src="https://github.com/user-attachments/assets/33d84051-8641-4e48-87e9-8132f8d420c9" />
 
-
-A professional AI-powered tool for analyzing Jira user stories, identifying gaps, ambiguities, and improvement opportunities using advanced prompt engineering techniques.
+**Easy Configuration**
 
 <img width="945" height="781" alt="image" src="https://github.com/user-attachments/assets/4df5ee16-0f91-49d2-9016-ae96c95f3c6c" />
 
-**Built with Kiro AI Assistant** - Developed 10-15x faster with professional quality from day one.
+
 
 ## 🎯 Why This App Matters
 
