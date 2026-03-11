@@ -112,13 +112,39 @@ class StoryAnalyzerGUI:
         self.story_id_entry.grid(row=0, column=1, sticky=(tk.W, tk.E), padx=(0, 10))
         self.story_id_entry.insert(0, "PROJ-123")
         
+        # Botón de fetch
+        self.fetch_button = ttk.Button(
+            input_frame, 
+            text=self.i18n.get("fetch_button"), 
+            command=self._fetch_story
+        )
+        self.fetch_button.grid(row=0, column=2, padx=(0, 5))
+        
+        # Botón de debug (pequeño, para ver campos de Jira)
+        self.debug_button = ttk.Button(
+            input_frame, 
+            text="🔍", 
+            command=self._debug_jira_fields,
+            width=3
+        )
+        self.debug_button.grid(row=0, column=3, padx=(0, 5))
+        
         # Botón de análisis
         self.analyze_button = ttk.Button(
             input_frame, 
             text=self.i18n.get("analyze_button"), 
             command=self._analyze_story
         )
-        self.analyze_button.grid(row=0, column=2, padx=(0, 5))
+        self.analyze_button.grid(row=0, column=4, padx=(0, 5))
+        
+        # Botón de generar test cases
+        self.generate_tests_button = ttk.Button(
+            input_frame,
+            text=self.i18n.get("generate_tests_button"),
+            command=self._generate_test_cases,
+            state="disabled"
+        )
+        self.generate_tests_button.grid(row=0, column=5, padx=(0, 5))
         
         # Botón de exportar
         self.export_button = ttk.Button(
@@ -127,7 +153,7 @@ class StoryAnalyzerGUI:
             command=self._export_analysis,
             state="disabled"
         )
-        self.export_button.grid(row=0, column=3)
+        self.export_button.grid(row=0, column=6)
         
         # Selector de proveedor
         ttk.Label(input_frame, text=self.i18n.get("provider_label")).grid(row=1, column=0, sticky=tk.W, padx=(0, 10), pady=(10, 0))
@@ -275,14 +301,14 @@ class StoryAnalyzerGUI:
         # Selector de modelo
         ttk.Label(sprint_input_frame, text=self.i18n.get("model_label")).grid(row=2, column=0, sticky=tk.W, padx=(0, 10), pady=(10, 0))
         
-        sprint_model_combo = ttk.Combobox(
+        self.sprint_model_combo = ttk.Combobox(
             sprint_input_frame, 
             textvariable=self.model_var,
             values=self.models_by_provider["OpenAI"],
             state="readonly",
             width=28
         )
-        sprint_model_combo.grid(row=2, column=1, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
+        self.sprint_model_combo.grid(row=2, column=1, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
         
         # Frame de salida
         sprint_output_frame = ttk.LabelFrame(self.sprint_tab, text=self.i18n.get("analysis_section"), padding="10")
@@ -310,11 +336,247 @@ class StoryAnalyzerGUI:
         # Se inicializarán cuando el usuario presione "Analizar Historia"
         self.status_var.set(self.i18n.get("status_ready"))
     
+    def _fetch_story(self) -> None:
+        """Obtiene y muestra la información de Jira sin analizar."""
+        story_id = self.story_id_entry.get().strip()
+        
+        if not story_id:
+            messagebox.showwarning(
+                self.i18n.get("warning"), 
+                self.i18n.get("warning_empty_story")
+            )
+            return
+        
+        # Inicializar cliente de Jira si no existe
+        if not self.jira_client:
+            try:
+                self.status_var.set(self.i18n.get("status_connecting"))
+                self.root.update()
+                self.jira_client = JiraClient.from_env()
+            except Exception as e:
+                self.status_var.set(self.i18n.get("status_error"))
+                messagebox.showerror(
+                    self.i18n.get("error"),
+                    self.i18n.get("error_connection", error=str(e))
+                )
+                return
+        
+        # Limpiar salida anterior
+        self.output_text.clear()
+        self.conversation_history = []
+        self.current_story_data = None
+        self.followup_button.config(state="disabled")
+        self.export_button.config(state="disabled")
+        self.generate_tests_button.config(state="disabled")
+        
+        self.status_var.set(self.i18n.get("status_fetching", story_id=story_id))
+        self.fetch_button.config(state="disabled")
+        self.root.update()
+        
+        try:
+            # Obtener notas del usuario
+            user_notes = self.user_notes_text.get("1.0", tk.END).strip()
+            
+            # Obtener historia de Jira
+            story_data = self.jira_client.get_user_story(story_id)
+            
+            # Agregar notas del usuario al story_data si existen
+            if user_notes:
+                story_data['user_notes'] = user_notes
+            
+            self.current_story_data = story_data
+            
+            # Mostrar información de la historia
+            self._display_story_info(story_data)
+            
+            self.status_var.set(self.i18n.get("status_fetched", story_id=story_id))
+            
+        except Exception as e:
+            messagebox.showerror(
+                self.i18n.get("error"), 
+                self.i18n.get("error_analysis", error=str(e))
+            )
+            self.status_var.set(self.i18n.get("status_error"))
+        finally:
+            self.fetch_button.config(state="normal")
+    
+    def _display_story_info(self, story_data: dict) -> None:
+        """
+        Muestra la información de la historia obtenida de Jira.
+        
+        Args:
+            story_data: Datos de la historia
+        """
+        info = f"""{'='*80}
+JIRA STORY INFORMATION
+{'='*80}
+
+Story ID: {story_data['key']}
+Title: {story_data['title']}
+Status: {story_data['status']}
+Priority: {story_data['priority']}
+Labels: {', '.join(story_data['labels']) if story_data['labels'] else 'None'}
+
+{'='*80}
+DESCRIPTION
+{'='*80}
+
+{story_data['description'] or 'No description provided'}
+
+{'='*80}
+ACCEPTANCE CRITERIA
+{'='*80}
+
+{story_data['acceptance_criteria'] or 'No acceptance criteria specified'}
+
+{'='*80}
+COMMENTS ({len(story_data['comments'])})
+{'='*80}
+
+"""
+        if story_data['comments']:
+            for i, comment in enumerate(story_data['comments'], 1):
+                info += f"Comment {i}:\n{comment}\n\n"
+        else:
+            info += "No comments\n\n"
+        
+        if story_data.get('user_notes'):
+            info += f"""{'='*80}
+USER NOTES/CONTEXT
+{'='*80}
+
+{story_data['user_notes']}
+
+"""
+        
+        info += f"""{'='*80}
+
+Ready to analyze! Click "Analyze Story" to generate AI analysis.
+
+{'='*80}
+"""
+        
+        self.output_text.append_text(info, 'normal')
+    
+    def _debug_jira_fields(self) -> None:
+        """Muestra todos los campos de Jira para debugging."""
+        story_id = self.story_id_entry.get().strip()
+        
+        if not story_id:
+            messagebox.showwarning(
+                "Debug", 
+                "Please enter a Story ID first"
+            )
+            return
+        
+        # Inicializar cliente de Jira si no existe
+        if not self.jira_client:
+            try:
+                self.jira_client = JiraClient.from_env()
+            except Exception as e:
+                messagebox.showerror(
+                    "Error",
+                    f"Could not connect to Jira:\n\n{str(e)}"
+                )
+                return
+        
+        try:
+            all_fields = self.jira_client.get_all_fields(story_id)
+            
+            # Mostrar en una ventana de diálogo
+            debug_window = tk.Toplevel(self.root)
+            debug_window.title(f"Jira Fields Debug - {story_id}")
+            debug_window.geometry("900x700")
+            
+            # Frame con scroll
+            frame = ttk.Frame(debug_window, padding="10")
+            frame.pack(fill=tk.BOTH, expand=True)
+            
+            # Text widget con scroll
+            text_widget = tk.Text(frame, wrap=tk.WORD, font=("Courier", 9))
+            scrollbar = ttk.Scrollbar(frame, orient="vertical", command=text_widget.yview)
+            text_widget.configure(yscrollcommand=scrollbar.set)
+            
+            text_widget.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+            
+            # Agregar información
+            text_widget.insert("1.0", f"JIRA FIELDS DEBUG - {story_id}\n")
+            text_widget.insert(tk.END, "="*80 + "\n\n")
+            
+            # Sección: Campos con contenido (los importantes)
+            text_widget.insert(tk.END, "📋 CUSTOM FIELDS WITH CONTENT (Potential Acceptance Criteria fields)\n")
+            text_widget.insert(tk.END, "="*80 + "\n\n")
+            
+            fields_with_content = all_fields.get('with_content', {})
+            if fields_with_content:
+                for field_name, value in sorted(fields_with_content.items()):
+                    # Resaltar campos que probablemente sean acceptance criteria
+                    if 'acceptance' in field_name.lower() or 'criteria' in field_name.lower() or 'ac' in field_name.lower():
+                        text_widget.insert(tk.END, f"⭐ {field_name}:\n", 'highlight')
+                    else:
+                        text_widget.insert(tk.END, f"{field_name}:\n")
+                    text_widget.insert(tk.END, f"  {value}\n\n")
+            else:
+                text_widget.insert(tk.END, "  No custom fields with content found\n\n")
+            
+            # Sección: Campos vacíos
+            text_widget.insert(tk.END, "\n" + "="*80 + "\n")
+            text_widget.insert(tk.END, "📭 EMPTY CUSTOM FIELDS (Not used in this story)\n")
+            text_widget.insert(tk.END, "="*80 + "\n\n")
+            
+            empty_fields = all_fields.get('empty', [])
+            if empty_fields:
+                # Mostrar en columnas
+                for i, field in enumerate(sorted(empty_fields)):
+                    text_widget.insert(tk.END, f"  {field}\n")
+            else:
+                text_widget.insert(tk.END, "  No empty fields\n")
+            
+            # Sección: Campos del sistema
+            text_widget.insert(tk.END, "\n" + "="*80 + "\n")
+            text_widget.insert(tk.END, "⚙️ SYSTEM FIELDS (Standard Jira fields)\n")
+            text_widget.insert(tk.END, "="*80 + "\n\n")
+            
+            system_fields = all_fields.get('system', [])
+            if system_fields:
+                text_widget.insert(tk.END, "  " + ", ".join(sorted(system_fields)) + "\n")
+            
+            # Instrucciones
+            text_widget.insert(tk.END, "\n\n" + "="*80 + "\n")
+            text_widget.insert(tk.END, "💡 INSTRUCTIONS\n")
+            text_widget.insert(tk.END, "="*80 + "\n\n")
+            text_widget.insert(tk.END, "1. Look for fields marked with ⭐ (likely acceptance criteria)\n")
+            text_widget.insert(tk.END, "2. Copy the field name (e.g., customfield_10054)\n")
+            text_widget.insert(tk.END, "3. Go to File → Settings\n")
+            text_widget.insert(tk.END, "4. Paste in 'Acceptance Criteria Field'\n")
+            text_widget.insert(tk.END, "5. You can add multiple fields separated by comma\n")
+            text_widget.insert(tk.END, "   Example: customfield_10054,customfield_10000\n")
+            
+            # Configurar tag para highlight
+            text_widget.tag_config('highlight', foreground='green', font=('Courier', 9, 'bold'))
+            
+            text_widget.config(state="disabled")
+            
+        except Exception as e:
+            messagebox.showerror(
+                "Error",
+                f"Error getting fields:\n\n{str(e)}"
+            )
+    
     def _on_provider_change(self, event=None) -> None:
         """Actualiza los modelos disponibles cuando cambia el proveedor."""
         provider = self.provider_var.get()
         models = self.models_by_provider.get(provider, [])
+        
+        # Actualizar combobox del tab Single Story
         self.model_combo['values'] = models
+        
+        # Actualizar combobox del tab Sprint Analysis
+        if hasattr(self, 'sprint_model_combo'):
+            self.sprint_model_combo['values'] = models
+        
+        # Seleccionar primer modelo si hay modelos disponibles
         if models:
             self.model_var.set(models[0])
     
@@ -345,7 +607,8 @@ class StoryAnalyzerGUI:
             try:
                 self.status_var.set(self.i18n.get("status_connecting"))
                 self.root.update()
-                self.jira_client = JiraClient.from_env()
+                if not self.jira_client:
+                    self.jira_client = JiraClient.from_env()
                 self.ai_analyzer = AIAnalyzer(
                     model=self._get_full_model_name(),
                     language=self.i18n.language
@@ -358,30 +621,49 @@ class StoryAnalyzerGUI:
                 )
                 return
         
-        # Limpiar salida anterior y reiniciar conversación
-        self.output_text.clear()
-        self.conversation_history = []
-        self.current_story_data = None
-        self.followup_button.config(state="disabled")
-        self.export_button.config(state="disabled")
+        # Si no hay datos cargados o el story ID cambió, obtener de Jira
+        if not self.current_story_data or self.current_story_data['key'] != story_id:
+            # Limpiar salida anterior
+            self.output_text.clear()
+            self.conversation_history = []
+            self.current_story_data = None
+            self.followup_button.config(state="disabled")
+            self.export_button.config(state="disabled")
+            self.generate_tests_button.config(state="disabled")
+            
+            self.status_var.set(self.i18n.get("status_fetching", story_id=story_id))
+            self.analyze_button.config(state="disabled")
+            self.root.update()
+            
+            try:
+                # Obtener notas del usuario
+                user_notes = self.user_notes_text.get("1.0", tk.END).strip()
+                
+                # Obtener historia de Jira
+                story_data = self.jira_client.get_user_story(story_id)
+                
+                # Agregar notas del usuario al story_data si existen
+                if user_notes:
+                    story_data['user_notes'] = user_notes
+                
+                self.current_story_data = story_data
+                
+            except Exception as e:
+                messagebox.showerror(
+                    self.i18n.get("error"), 
+                    self.i18n.get("error_analysis", error=str(e))
+                )
+                self.status_var.set(self.i18n.get("status_error"))
+                self.analyze_button.config(state="normal")
+                return
+        else:
+            # Ya tenemos los datos, solo limpiar el análisis anterior si existe
+            # pero mantener la información de Jira
+            pass
         
-        self.status_var.set(self.i18n.get("status_fetching", story_id=story_id))
         self.analyze_button.config(state="disabled")
-        self.root.update()
         
         try:
-            # Obtener notas del usuario
-            user_notes = self.user_notes_text.get("1.0", tk.END).strip()
-            
-            # Obtener historia de Jira
-            story_data = self.jira_client.get_user_story(story_id)
-            
-            # Agregar notas del usuario al story_data si existen
-            if user_notes:
-                story_data['user_notes'] = user_notes
-            
-            self.current_story_data = story_data
-            
             provider = self.provider_var.get()
             model = self.model_var.get()
             self.status_var.set(self.i18n.get("status_analyzing", story_id=story_id, provider=provider, model=model))
@@ -391,8 +673,15 @@ class StoryAnalyzerGUI:
             self.ai_analyzer.model = self._get_full_model_name()
             self.ai_analyzer.language = self.i18n.language
             
-            # Mostrar encabezado de la historia
-            self._display_story_header(story_data)
+            # Si ya hay contenido (fetch previo), agregar separador
+            current_content = self.output_text.get_all_text().strip()
+            if current_content:
+                self.output_text.append_text(f"\n\n{'='*80}\n", 'normal')
+                self.output_text.append_text("AI ANALYSIS\n", 'normal')
+                self.output_text.append_text(f"{'='*80}\n\n", 'normal')
+            else:
+                # Mostrar encabezado de la historia
+                self._display_story_header(self.current_story_data)
             
             # Acumular contenido durante streaming
             accumulated_content = []
@@ -404,7 +693,7 @@ class StoryAnalyzerGUI:
                 self.root.update()
             
             # Analizar con IA (con streaming)
-            analysis = self.ai_analyzer.analyze_story(story_data, callback=stream_callback)
+            analysis = self.ai_analyzer.analyze_story(self.current_story_data, callback=stream_callback)
             
             # Guardar en historial
             self.conversation_history.append({
@@ -417,6 +706,7 @@ class StoryAnalyzerGUI:
             # Habilitar campo de seguimiento
             self.followup_button.config(state="normal")
             self.export_button.config(state="normal")
+            self.generate_tests_button.config(state="normal")
             
         except Exception as e:
             messagebox.showerror(
@@ -426,6 +716,54 @@ class StoryAnalyzerGUI:
             self.status_var.set(self.i18n.get("status_error"))
         finally:
             self.analyze_button.config(state="normal")
+    
+    def _generate_test_cases(self) -> None:
+        """Genera test cases en formato Gherkin para la historia actual."""
+        if not self.current_story_data:
+            messagebox.showwarning(
+                self.i18n.get("warning"),
+                self.i18n.get("warning_no_analysis")
+            )
+            return
+        
+        # Confirmar que se va a generar
+        if not messagebox.askyesno(
+            "Generate Test Cases",
+            f"Generate test cases in Gherkin format for {self.current_story_data['key']}?"
+        ):
+            return
+        
+        self.status_var.set(self.i18n.get("status_generating_tests"))
+        self.generate_tests_button.config(state="disabled")
+        self.root.update()
+        
+        try:
+            # Agregar separador en el output
+            self.output_text.append_text(f"\n\n{'='*80}\n", 'normal')
+            self.output_text.append_text("TEST CASES (GHERKIN FORMAT)\n", 'normal')
+            self.output_text.append_text(f"{'='*80}\n\n", 'normal')
+            
+            # Callback para streaming
+            def stream_callback(chunk: str):
+                self.output_text.append_text(chunk, 'normal')
+                self.root.update()
+            
+            # Generar test cases
+            test_cases = self.ai_analyzer.generate_test_cases(
+                self.current_story_data,
+                callback=stream_callback
+            )
+            
+            self.status_var.set(f"Test cases generated for {self.current_story_data['key']}")
+            
+        except Exception as e:
+            messagebox.showerror(
+                self.i18n.get("error"),
+                f"Error generating test cases:\n\n{str(e)}"
+            )
+            self.status_var.set(self.i18n.get("status_error"))
+        finally:
+            self.generate_tests_button.config(state="normal")
     
     def _display_story_header(self, story_data: dict) -> None:
         """

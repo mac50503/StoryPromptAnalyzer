@@ -949,6 +949,305 @@ REGLA CRÍTICA: Analiza las historias como un conjunto cohesivo. Identifica depe
 
 CRITICAL RULE: Analyze stories as a cohesive set. Identify REAL dependencies based on provided information. DO NOT invent dependencies or assume information not present. Generate a practical and realistic work plan."""
     
+    def generate_test_cases(self, story_data: Dict[str, Any], callback=None) -> str:
+        """
+        Genera test cases en formato Gherkin basados en la historia de usuario.
+        
+        Args:
+            story_data: Datos de la historia de usuario
+            callback: Función opcional para recibir chunks en tiempo real
+            
+        Returns:
+            Test cases en formato Gherkin
+        """
+        try:
+            prompt = self._create_test_cases_prompt(story_data)
+            system_role = self._get_test_cases_system_role()
+            
+            response = completion(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_role},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,
+                max_tokens=2000,
+                stream=True
+            )
+            
+            # Recolectar el contenido del stream
+            full_content = ""
+            for chunk in response:
+                if hasattr(chunk, 'choices') and len(chunk.choices) > 0:
+                    delta = chunk.choices[0].delta
+                    if hasattr(delta, 'content') and delta.content:
+                        full_content += delta.content
+                        if callback:
+                            callback(delta.content)
+            
+            return full_content
+            
+        except Exception as e:
+            raise Exception(f"Error generating test cases: {str(e)}")
+    
+    def _create_test_cases_prompt(self, story_data: Dict[str, Any]) -> str:
+        """Crea prompt para generar test cases."""
+        if self.language == "es":
+            return self._create_spanish_test_cases_prompt(story_data)
+        else:
+            return self._create_english_test_cases_prompt(story_data)
+    
+    def _create_english_test_cases_prompt(self, story_data: Dict[str, Any]) -> str:
+        """Creates English prompt for test case generation."""
+        
+        prompt = f"""<task>
+Generate comprehensive test cases in Gherkin format (Given-When-Then) for the following user story.
+</task>
+
+<story_data>
+<metadata>
+ID: {story_data['key']}
+Title: {story_data['title']}
+Priority: {story_data['priority']}
+</metadata>
+
+<description>
+{story_data['description'] or 'No description'}
+{f"\\n--- ANALYST NOTES ---\\n{story_data['user_notes']}\\n--- END NOTES ---" if story_data.get('user_notes') else ''}
+</description>
+
+<acceptance_criteria>
+{story_data['acceptance_criteria'] or 'No acceptance criteria'}
+</acceptance_criteria>
+</story_data>
+
+<output_format>
+Generate test cases in standard Gherkin format:
+
+Feature: [Feature name from story]
+  As a [user type]
+  I want [functionality]
+  So that [business value]
+
+  Background:
+    Given [common preconditions for all scenarios]
+
+  Scenario: [Scenario name - Happy Path]
+    Given [precondition]
+    And [another precondition]
+    When [action]
+    And [another action]
+    Then [expected result]
+    And [another expected result]
+
+  Scenario: [Scenario name - Edge Case]
+    Given [precondition]
+    When [action]
+    Then [expected result]
+
+  Scenario: [Scenario name - Error Handling]
+    Given [precondition]
+    When [invalid action]
+    Then [error handling result]
+</output_format>
+
+<test_coverage_requirements>
+Generate test cases for:
+
+1. **Happy Path Scenarios** (2-3 scenarios)
+   - Main user flow with valid inputs
+   - Expected successful outcomes
+   - Core functionality working as intended
+
+2. **Edge Cases** (2-3 scenarios)
+   - Boundary conditions
+   - Minimum/maximum values
+   - Empty or null inputs
+   - Special characters
+   - Large data sets
+
+3. **Error Scenarios** (2-3 scenarios)
+   - Invalid inputs
+   - Missing required fields
+   - Unauthorized access
+   - System errors
+   - Timeout scenarios
+
+4. **Validation Tests** (1-2 scenarios)
+   - Input validation
+   - Business rule validation
+   - Data format validation
+
+5. **Integration Tests** (if applicable, 1-2 scenarios)
+   - API interactions
+   - Database operations
+   - Third-party service calls
+</test_coverage_requirements>
+
+<guidelines>
+- Use clear, specific language in Gherkin steps
+- Each scenario should be independent and executable
+- Use "And" for multiple steps of the same type
+- Include specific data values in examples when relevant
+- Focus on behavior, not implementation
+- Base test cases ONLY on information in the story
+- DO NOT invent features or functionality not mentioned
+- If acceptance criteria are vague, note it in comments
+- Use realistic test data
+- Keep scenarios focused and atomic
+</guidelines>
+
+<example_quality>
+Good:
+  Scenario: User successfully logs in with valid credentials
+    Given the user is on the login page
+    And the user has a valid account with email "user@example.com"
+    When the user enters email "user@example.com"
+    And the user enters password "ValidPass123"
+    And the user clicks the "Login" button
+    Then the user should be redirected to the dashboard
+    And the user should see a welcome message "Welcome back, User"
+
+Bad:
+  Scenario: Login works
+    Given user on page
+    When user logs in
+    Then success
+</example_quality>"""
+
+        return prompt
+    
+    def _create_spanish_test_cases_prompt(self, story_data: Dict[str, Any]) -> str:
+        """Crea prompt en español para generación de test cases."""
+        
+        prompt = f"""<tarea>
+Genera casos de prueba completos en formato Gherkin (Dado-Cuando-Entonces) para la siguiente historia de usuario.
+</tarea>
+
+<datos_historia>
+<metadatos>
+ID: {story_data['key']}
+Título: {story_data['title']}
+Prioridad: {story_data['priority']}
+</metadatos>
+
+<descripcion>
+{story_data['description'] or 'Sin descripción'}
+{f"\\n--- NOTAS DEL ANALISTA ---\\n{story_data['user_notes']}\\n--- FIN NOTAS ---" if story_data.get('user_notes') else ''}
+</descripcion>
+
+<criterios_aceptacion>
+{story_data['acceptance_criteria'] or 'Sin criterios de aceptación'}
+</criterios_aceptacion>
+</datos_historia>
+
+<formato_salida>
+Genera casos de prueba en formato Gherkin estándar:
+
+Característica: [Nombre de la característica]
+  Como [tipo de usuario]
+  Quiero [funcionalidad]
+  Para [valor de negocio]
+
+  Antecedentes:
+    Dado [precondiciones comunes para todos los escenarios]
+
+  Escenario: [Nombre del escenario - Flujo Principal]
+    Dado [precondición]
+    Y [otra precondición]
+    Cuando [acción]
+    Y [otra acción]
+    Entonces [resultado esperado]
+    Y [otro resultado esperado]
+
+  Escenario: [Nombre del escenario - Caso Límite]
+    Dado [precondición]
+    Cuando [acción]
+    Entonces [resultado esperado]
+
+  Escenario: [Nombre del escenario - Manejo de Errores]
+    Dado [precondición]
+    Cuando [acción inválida]
+    Entonces [resultado de manejo de error]
+</formato_salida>
+
+<requisitos_cobertura>
+Genera casos de prueba para:
+
+1. **Escenarios de Flujo Principal** (2-3 escenarios)
+   - Flujo principal con entradas válidas
+   - Resultados exitosos esperados
+   - Funcionalidad principal funcionando correctamente
+
+2. **Casos Límite** (2-3 escenarios)
+   - Condiciones de frontera
+   - Valores mínimos/máximos
+   - Entradas vacías o nulas
+   - Caracteres especiales
+   - Conjuntos de datos grandes
+
+3. **Escenarios de Error** (2-3 escenarios)
+   - Entradas inválidas
+   - Campos requeridos faltantes
+   - Acceso no autorizado
+   - Errores del sistema
+   - Escenarios de timeout
+
+4. **Pruebas de Validación** (1-2 escenarios)
+   - Validación de entrada
+   - Validación de reglas de negocio
+   - Validación de formato de datos
+
+5. **Pruebas de Integración** (si aplica, 1-2 escenarios)
+   - Interacciones con API
+   - Operaciones de base de datos
+   - Llamadas a servicios de terceros
+</requisitos_cobertura>
+
+<directrices>
+- Usa lenguaje claro y específico en los pasos Gherkin
+- Cada escenario debe ser independiente y ejecutable
+- Usa "Y" para múltiples pasos del mismo tipo
+- Incluye valores de datos específicos en ejemplos cuando sea relevante
+- Enfócate en comportamiento, no en implementación
+- Basa los casos de prueba SOLO en información de la historia
+- NO inventes características o funcionalidad no mencionada
+- Si los criterios de aceptación son vagos, nótalo en comentarios
+- Usa datos de prueba realistas
+- Mantén los escenarios enfocados y atómicos
+</directrices>
+
+<ejemplo_calidad>
+Bueno:
+  Escenario: Usuario inicia sesión exitosamente con credenciales válidas
+    Dado que el usuario está en la página de inicio de sesión
+    Y el usuario tiene una cuenta válida con email "usuario@ejemplo.com"
+    Cuando el usuario ingresa el email "usuario@ejemplo.com"
+    Y el usuario ingresa la contraseña "ClaveValida123"
+    Y el usuario hace clic en el botón "Iniciar Sesión"
+    Entonces el usuario debe ser redirigido al dashboard
+    Y el usuario debe ver un mensaje de bienvenida "Bienvenido de nuevo, Usuario"
+
+Malo:
+  Escenario: Login funciona
+    Dado usuario en página
+    Cuando usuario inicia sesión
+    Entonces éxito
+</ejemplo_calidad>"""
+
+        return prompt
+    
+    def _get_test_cases_system_role(self) -> str:
+        """Obtiene el rol del sistema para generación de test cases."""
+        if self.language == "es":
+            return """Eres un QA Engineer senior especializado en crear casos de prueba completos y ejecutables en formato Gherkin.
+
+REGLA CRÍTICA: Genera casos de prueba basados EXCLUSIVAMENTE en la información proporcionada en la historia de usuario. NO inventes funcionalidad o comportamientos no mencionados. Crea escenarios claros, específicos y ejecutables que cubran flujos principales, casos límite y manejo de errores."""
+        else:
+            return """You are a senior QA Engineer specialized in creating comprehensive and executable test cases in Gherkin format.
+
+CRITICAL RULE: Generate test cases based EXCLUSIVELY on information provided in the user story. DO NOT invent functionality or behaviors not mentioned. Create clear, specific, and executable scenarios covering happy paths, edge cases, and error handling."""
+    
     def followup_question(self, story_data: Dict[str, Any], conversation_history: list, question: str, callback=None) -> str:
         """
         Procesa una pregunta de seguimiento sobre el análisis.

@@ -46,8 +46,64 @@ class JiraClient:
             
             # Extraer criterios de aceptación (pueden estar en diferentes campos)
             acceptance_criteria = ""
-            if hasattr(issue.fields, 'customfield_10000'):
-                acceptance_criteria = getattr(issue.fields, 'customfield_10000', "")
+            
+            # Obtener campos configurados por el usuario (puede ser una lista separada por comas)
+            user_fields = os.getenv("JIRA_ACCEPTANCE_CRITERIA_FIELD", "")
+            if user_fields:
+                # Separar por comas y limpiar espacios
+                fields_list = [f.strip() for f in user_fields.split(',') if f.strip()]
+                
+                # Intentar con cada campo configurado
+                for field in fields_list:
+                    if hasattr(issue.fields, field):
+                        value = getattr(issue.fields, field, None)
+                        if value:
+                            acceptance_criteria = str(value)
+                            break
+            
+            # Si no se encontró, buscar en campos comunes
+            if not acceptance_criteria:
+                # Lista de campos comunes donde pueden estar los criterios de aceptación
+                possible_fields = [
+                    'customfield_10054',  # Campo común
+                    'customfield_10000',  # Campo común en Jira Cloud
+                    'customfield_10100',
+                    'customfield_10200',
+                    'customfield_12000',
+                    'customfield_10007',  # Otro campo común
+                    'customfield_10008',
+                    'customfield_10009',
+                    'customfield_10010',
+                ]
+                
+                # Intentar encontrar criterios de aceptación en los campos custom
+                for field in possible_fields:
+                    if hasattr(issue.fields, field):
+                        value = getattr(issue.fields, field, None)
+                        if value:
+                            # Convertir a string sin límite de caracteres
+                            acceptance_criteria = str(value)
+                            break
+            
+            # Si no se encontró en custom fields, buscar en la descripción
+            # A veces los criterios están al final de la descripción
+            if not acceptance_criteria and issue.fields.description:
+                desc = issue.fields.description
+                # Buscar secciones comunes de criterios de aceptación
+                markers = [
+                    'Acceptance Criteria',
+                    'Criterios de Aceptación',
+                    'AC:',
+                    'Acceptance:',
+                    'Criteria:',
+                ]
+                for marker in markers:
+                    if marker in desc:
+                        # Extraer desde el marcador hasta el final
+                        parts = desc.split(marker, 1)
+                        if len(parts) > 1:
+                            acceptance_criteria = parts[1].strip()
+                            break
             
             # Obtener comentarios
             comments = [comment.body for comment in issue.fields.comment.comments]
@@ -67,3 +123,58 @@ class JiraClient:
             }
         except Exception as e:
             raise Exception(f"Error al obtener la historia {story_key}: {str(e)}")
+    
+    def get_all_fields(self, story_key: str) -> Dict[str, Any]:
+        """
+        Obtiene todos los campos disponibles de una historia para debugging.
+        Útil para encontrar el campo correcto de acceptance criteria.
+        
+        Args:
+            story_key: Clave de la historia (ej: PROJ-123)
+            
+        Returns:
+            Diccionario con campos agrupados por tipo (con contenido, vacíos, system)
+        """
+        try:
+            issue = self.jira.issue(story_key)
+            
+            # Agrupar campos
+            fields_with_content = {}
+            empty_fields = []
+            system_fields = []
+            
+            for field_name in dir(issue.fields):
+                if field_name.startswith('_'):
+                    continue
+                    
+                try:
+                    value = getattr(issue.fields, field_name)
+                    
+                    # Clasificar campos del sistema
+                    if field_name in ['summary', 'description', 'status', 'priority', 'issuetype', 
+                                     'project', 'created', 'updated', 'reporter', 'assignee',
+                                     'labels', 'components', 'fixVersions', 'versions', 'comment']:
+                        system_fields.append(field_name)
+                        continue
+                    
+                    # Campos con contenido
+                    if value is not None and value != "" and value != []:
+                        str_value = str(value)
+                        if len(str_value) > 500:
+                            fields_with_content[field_name] = str_value[:500] + f"... [TRUNCATED - Total: {len(str_value)} chars]"
+                        else:
+                            fields_with_content[field_name] = str_value
+                    else:
+                        # Campos vacíos
+                        empty_fields.append(field_name)
+                        
+                except:
+                    pass
+            
+            return {
+                'with_content': fields_with_content,
+                'empty': empty_fields,
+                'system': system_fields
+            }
+        except Exception as e:
+            raise Exception(f"Error getting fields for {story_key}: {str(e)}")

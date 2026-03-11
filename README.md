@@ -25,19 +25,23 @@ As a software architect, you spend hours reviewing user stories, identifying mis
 - **Dependency Detection**: Automatically identifies technical, data, and functional dependencies between stories
 - **Risk Assessment**: Evaluates sprint risks and suggests mitigation strategies
 - **Implementation Roadmap**: Generates 4-phase work plan with timeline and milestones
+- **Test Case Generation**: Automatically generates comprehensive test cases in Gherkin format (Given-When-Then)
+- **Fetch Before Analyze**: Preview Jira story information before spending AI tokens
 - **User Context Notes**: Add architectural constraints, security requirements, or technical concerns directly into the analysis
 - **Interactive Refinement**: Ask follow-up questions to drill into specific technical aspects
 - **Professional Export**: Generate PDF/DOCX reports for design reviews and documentation
 - **Anti-Hallucination**: Strict guidelines ensure AI only references what's actually in the story
 
 ### Core Capabilities
-- **Jira Integration**: Direct connection to fetch user stories
+- **Jira Integration**: Direct connection to fetch user stories with flexible custom field configuration
+- **Custom Field Debug Tool**: Built-in tool to identify and configure Jira custom fields (like Acceptance Criteria)
 - **Dual AI Support**: OpenAI (GPT-4-turbo) or Anthropic (Claude 3.5 Sonnet)
 - **Real-time Streaming**: See analysis as it's generated
 - **Bilingual**: Full English/Spanish support
-- **Two Analysis Modes**:
+- **Three Analysis Modes**:
   - Single Story: 7-section detailed analysis
   - Sprint Analysis: 9-section consolidated report with dependencies
+  - Test Cases: Comprehensive Gherkin scenarios (happy path, edge cases, errors)
 
 ## 🚀 Advanced Prompt Engineering
 
@@ -188,6 +192,254 @@ For analyzing multiple stories together, the system uses a specialized prompt th
 - OpenAI: `gpt-4-turbo` (best balance)
 - Anthropic: `claude-3-5-sonnet-20241022` (excellent instruction following)
 
+## 🏗️ Architecture
+
+### Component Diagram
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         GUI Layer (Tkinter)                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │ Single Story │  │    Sprint    │  │   Settings   │          │
+│  │     Tab      │  │  Analysis Tab│  │    Window    │          │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
+│         │                  │                  │                   │
+│         └──────────────────┴──────────────────┘                   │
+│                            │                                      │
+└────────────────────────────┼──────────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                      Business Logic Layer                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │ AIAnalyzer   │  │ JiraClient   │  │    I18n      │          │
+│  │              │  │              │  │              │          │
+│  │ - analyze    │  │ - get_story  │  │ - translate  │          │
+│  │ - sprint     │  │ - get_fields │  │ - set_lang   │          │
+│  │ - test_cases │  │ - debug      │  │              │          │
+│  └──────┬───────┘  └──────┬───────┘  └──────────────┘          │
+│         │                  │                                      │
+└─────────┼──────────────────┼──────────────────────────────────────┘
+          │                  │
+          ▼                  ▼
+┌─────────────────┐  ┌─────────────────┐
+│   LiteLLM API   │  │   Jira API      │
+│                 │  │                 │
+│ - OpenAI        │  │ - REST API      │
+│ - Anthropic     │  │ - Custom Fields │
+└─────────────────┘  └─────────────────┘
+          │                  │
+          ▼                  ▼
+┌─────────────────────────────────────────┐
+│         Export & Utilities Layer         │
+│  ┌──────────────┐  ┌──────────────┐    │
+│  │ExportManager │  │RichTextViewer│    │
+│  │              │  │              │    │
+│  │ - to_pdf     │  │ - format     │    │
+│  │ - to_docx    │  │ - highlight  │    │
+│  └──────────────┘  └──────────────┘    │
+└─────────────────────────────────────────┘
+```
+
+### Module Structure
+
+```
+src/
+├── main.py                 # Application entry point
+├── gui.py                  # Main GUI controller (900+ lines)
+│   ├── StoryAnalyzerGUI   # Main window class
+│   ├── _setup_single_story_tab()
+│   ├── _setup_sprint_analysis_tab()
+│   ├── _fetch_story()     # NEW: Preview before analyze
+│   ├── _analyze_story()
+│   ├── _analyze_sprint()
+│   ├── _generate_test_cases()  # NEW: Gherkin generation
+│   └── _debug_jira_fields()    # NEW: Field discovery
+│
+├── ai_analyzer.py          # AI analysis engine (600+ lines)
+│   ├── AIAnalyzer
+│   ├── analyze_story()    # Single story analysis
+│   ├── analyze_sprint()   # Multi-story with dependencies
+│   ├── generate_test_cases()  # NEW: Test case generation
+│   ├── _create_english_prompt()
+│   ├── _create_spanish_prompt()
+│   └── _create_test_cases_prompt()  # NEW
+│
+├── jira_client.py          # Jira API integration (150+ lines)
+│   ├── JiraClient
+│   ├── get_user_story()   # Fetch story with flexible AC field
+│   ├── get_all_fields()   # NEW: Debug tool for field discovery
+│   └── from_env()         # Factory from .env config
+│
+├── settings_window.py      # Configuration UI (200+ lines)
+│   ├── SettingsWindow
+│   ├── Jira credentials
+│   ├── AC field config    # NEW: Multiple fields support
+│   ├── AI API keys
+│   └── Model selection
+│
+├── i18n.py                 # Internationalization (150+ lines)
+│   ├── I18n
+│   ├── English translations
+│   ├── Spanish translations
+│   └── get() / set_language()
+│
+├── export_utils.py         # Export functionality (200+ lines)
+│   ├── ExportManager
+│   ├── export_to_pdf()    # ReportLab formatting
+│   ├── export_to_docx()   # python-docx formatting
+│   └── Markdown support
+│
+└── rich_text_viewer.py     # Enhanced text display (100+ lines)
+    ├── RichTextViewer
+    ├── Syntax highlighting
+    └── Markdown rendering
+
+tests/
+├── test_ai_analyzer.py
+├── test_jira_client.py
+└── test_main.py
+```
+
+### Data Flow
+
+#### Single Story Analysis Flow
+```
+1. User Input
+   └─> Story ID + User Notes
+       │
+2. Fetch (Optional)
+   └─> JiraClient.get_user_story()
+       └─> Try configured AC fields (customfield_10054, ...)
+       └─> Fallback to common fields
+       └─> Parse description for AC markers
+       │
+3. Display Story Info
+   └─> Show: Description, AC, Comments, Labels
+       └─> User reviews and adds notes
+       │
+4. Analyze
+   └─> AIAnalyzer.analyze_story()
+       └─> Build XML-structured prompt
+       └─> Include user notes in description
+       └─> Stream response to UI
+       └─> Parse 7-section analysis
+       │
+5. Generate Test Cases (Optional)
+   └─> AIAnalyzer.generate_test_cases()
+       └─> Build Gherkin prompt
+       └─> Generate scenarios:
+           ├─> Happy path (2-3)
+           ├─> Edge cases (2-3)
+           ├─> Error scenarios (2-3)
+           └─> Validation tests (1-2)
+       │
+6. Export
+   └─> ExportManager.export_to_pdf/docx()
+       └─> Format with headers, sections
+       └─> Include story info + analysis + tests
+```
+
+#### Sprint Analysis Flow
+```
+1. User Input
+   └─> Multiple Story IDs (comma-separated)
+       │
+2. Fetch All Stories
+   └─> For each ID:
+       └─> JiraClient.get_user_story()
+       └─> Collect in list
+       │
+3. Analyze Sprint
+   └─> AIAnalyzer.analyze_sprint()
+       └─> Build consolidated prompt with all stories
+       └─> Identify dependencies:
+           ├─> Technical (APIs, services)
+           ├─> Data (models, schemas)
+           └─> Functional (feature dependencies)
+       └─> Generate 4-phase implementation plan
+       └─> Stream 9-section report
+       │
+4. Export Sprint Report
+   └─> ExportManager with sprint title
+```
+
+#### Debug Flow (Field Discovery)
+```
+1. User clicks Debug 🔍
+   └─> JiraClient.get_all_fields()
+       │
+2. Classify Fields
+   ├─> WITH CONTENT (custom fields with data)
+   │   └─> Highlight AC candidates (⭐)
+   ├─> EMPTY (unused in this story)
+   └─> SYSTEM (standard Jira fields)
+       │
+3. Display in Window
+   └─> User copies field name
+       └─> Adds to Settings
+       └─> Saves to .env
+```
+
+### Key Design Patterns
+
+1. **Factory Pattern**: `JiraClient.from_env()` creates instances from environment
+2. **Strategy Pattern**: Multiple AI models (OpenAI/Anthropic) via LiteLLM
+3. **Observer Pattern**: Streaming callbacks for real-time UI updates
+4. **Template Method**: Prompt generation with language-specific implementations
+5. **Singleton**: I18n instance shared across components
+
+### Configuration Flow
+
+```
+.env file
+   │
+   ├─> JIRA_URL, JIRA_EMAIL, JIRA_API_TOKEN
+   ├─> JIRA_ACCEPTANCE_CRITERIA_FIELD (comma-separated)
+   ├─> OPENAI_API_KEY / ANTHROPIC_API_KEY
+   ├─> AI_MODEL (default model)
+   └─> LANGUAGE (en/es)
+       │
+       ▼
+Settings Window (GUI)
+   │
+   └─> Updates .env via python-dotenv
+       │
+       ▼
+Application Reload
+   └─> load_dotenv(override=True)
+```
+
+## 🔧 Configuration
+
+### Jira Custom Fields Setup
+
+Different Jira instances use different custom fields for Acceptance Criteria. Use the built-in Debug tool to find yours:
+
+1. **Find Your Field:**
+   - Enter a Story ID that has acceptance criteria
+   - Click the Debug button (🔍) next to Story ID
+   - Look for fields marked with ⭐ (likely acceptance criteria)
+   - Fields with "acceptance", "criteria", or "AC" in the name are highlighted
+
+2. **Configure in Settings:**
+   - Go to File → Settings
+   - Find "Acceptance Criteria Field"
+   - Enter your field(s): `customfield_10054` or multiple: `customfield_10054,customfield_10000`
+   - Click Save
+
+3. **Debug Window Shows:**
+   - 📋 Custom fields WITH content (your candidates)
+   - 📭 Empty fields (not used in this story)
+   - ⚙️ System fields (standard Jira fields)
+
+**Common Field Names:**
+- `customfield_10000` - Jira Cloud default
+- `customfield_10054` - Common alternative
+- `customfield_10007` - Another common field
+
+The app will try each configured field in order until it finds one with content.
+
 ## 📋 Quick Start
 
 ```bash
@@ -199,29 +451,71 @@ pip install -r requirements.txt
 # Configure (copy .env.example to .env and add your keys)
 cp .env.example .env
 
+# Edit .env with your credentials:
+# - JIRA_URL, JIRA_EMAIL, JIRA_API_TOKEN
+# - JIRA_ACCEPTANCE_CRITERIA_FIELD (use Debug 🔍 to find yours)
+# - OPENAI_API_KEY or ANTHROPIC_API_KEY
+# - AI_MODEL (default: gpt-4-turbo)
+
 # Run
 python src/main.py
 ```
 
+### First Time Setup
+
+1. **Configure Jira:**
+   - Get your Jira API token from: https://id.atlassian.com/manage-profile/security/api-tokens
+   - Add to .env or use File → Settings
+
+2. **Find Acceptance Criteria Field:**
+   - Run the app
+   - Enter any Story ID
+   - Click Debug (🔍)
+   - Copy the field name (e.g., `customfield_10054`)
+   - Add to Settings or .env
+
+3. **Configure AI:**
+   - Add OpenAI or Anthropic API key
+   - Select your preferred model
+
 ## 🎯 Usage for Architects
 
 ### Single Story Analysis
-**Before Sprint Planning**
+
+**Workflow with Fetch (Recommended)**
 1. Enter Story ID
+2. Click "Fetch from Jira" → Preview all story information
+3. Review description, acceptance criteria, comments
+4. Add architectural notes if needed
+5. Click "Analyze Story" → Generate AI analysis
+6. Click "Generate Test Cases" → Create Gherkin test scenarios
+7. Export to PDF/DOCX for documentation
+
+**Quick Analysis (Direct)**
+1. Enter Story ID
+2. Click "Analyze Story" → Fetches and analyzes in one step
+
+**Before Sprint Planning**
+1. Fetch story to verify completeness
 2. Add architectural notes: *"Must integrate with legacy system. Consider 5s timeout and retry logic."*
-3. Analyze
-4. Review gaps in non-functional requirements
+3. Analyze to identify gaps
+4. Generate test cases for QA team
 5. Export PDF for team discussion
 
 **During Design Reviews**
-1. Analyze story with notes: *"Microservices architecture. Verify service boundaries are clear."*
-2. Ask follow-up: *"What happens if the payment service is down?"*
-3. Export analysis with your architectural concerns documented
+1. Fetch and review story
+2. Add notes: *"Microservices architecture. Verify service boundaries are clear."*
+3. Analyze with AI
+4. Ask follow-up: *"What happens if the payment service is down?"*
+5. Generate test cases
+6. Export comprehensive analysis
 
 **For Compliance/Security**
-1. Add notes: *"PII data. Must comply with GDPR. Encryption at rest required."*
-2. Verify security requirements are present
-3. Generate questions for security team
+1. Fetch story
+2. Add notes: *"PII data. Must comply with GDPR. Encryption at rest required."*
+3. Analyze to verify security requirements
+4. Generate test cases including security scenarios
+5. Export for security team review
 
 ### Sprint Analysis (NEW!)
 **Sprint Planning Preparation**
@@ -280,6 +574,29 @@ python src/main.py
 
 ❌ "Make it fast"
 ❌ "Needs security"
+```
+
+**Using Fetch Before Analyze:**
+```
+✅ Fetch → Review → Add notes → Analyze (saves tokens if story is incomplete)
+✅ Fetch → Verify acceptance criteria are present → Analyze
+✅ Use Debug 🔍 to find missing fields
+
+❌ Analyze directly without reviewing (wastes tokens on incomplete stories)
+```
+
+**Test Case Generation:**
+```
+✅ Analyze story first to understand requirements
+✅ Generate test cases after analysis is complete
+✅ Export both analysis + test cases together
+
+The tool generates:
+- Happy path scenarios (2-3)
+- Edge cases (2-3)
+- Error scenarios (2-3)
+- Validation tests (1-2)
+- Integration tests (if applicable)
 ```
 
 **Model Selection:**
