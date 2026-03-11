@@ -102,6 +102,18 @@ class I18n:
             "button_save": "Guardar",
             "button_apply": "Aplicar",
             "error_save_config": "Error al guardar la configuración:\n\n{error}",
+            
+            # Jira comment posting
+            "post_to_jira_button": "Publicar en Jira",
+            "edit_comment_title": "Editar Comentario para Jira",
+            "comment_preview_label": "Vista previa del comentario (editable):",
+            "post_comment_button": "Publicar Comentario",
+            "cancel_button": "Cancelar",
+            "status_posting_comment": "Publicando comentario en {story_id}...",
+            "status_comment_posted": "Comentario publicado exitosamente en {story_id}",
+            "error_post_comment": "Error al publicar comentario:\n\n{error}",
+            "confirm_post_title": "Confirmar Publicación",
+            "confirm_post_message": "¿Estás seguro de que deseas publicar este comentario en {story_id}?",
         },
         "en": {
             # Main window
@@ -197,6 +209,18 @@ class I18n:
             "button_save": "Save",
             "button_apply": "Apply",
             "error_save_config": "Error saving configuration:\n\n{error}",
+            
+            # Jira comment posting
+            "post_to_jira_button": "Post to Jira",
+            "edit_comment_title": "Edit Comment for Jira",
+            "comment_preview_label": "Comment preview (editable):",
+            "post_comment_button": "Post Comment",
+            "cancel_button": "Cancel",
+            "status_posting_comment": "Posting comment to {story_id}...",
+            "status_comment_posted": "Comment posted successfully to {story_id}",
+            "error_post_comment": "Error posting comment:\n\n{error}",
+            "confirm_post_title": "Confirm Post",
+            "confirm_post_message": "Are you sure you want to post this comment to {story_id}?",
         }
     }
     

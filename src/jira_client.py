@@ -178,3 +178,37 @@ class JiraClient:
             }
         except Exception as e:
             raise Exception(f"Error getting fields for {story_key}: {str(e)}")
+    
+    def post_comment(self, story_key: str, comment_text: str) -> bool:
+        """
+        Publica un comentario en una historia de Jira.
+        
+        Args:
+            story_key: Clave de la historia (ej: PROJ-123)
+            comment_text: Texto del comentario a publicar
+            
+        Returns:
+            True si se publicó exitosamente, False en caso contrario
+        """
+        try:
+            self.jira.add_comment(story_key, comment_text)
+            return True
+        except Exception as e:
+            raise Exception(f"Error posting comment to {story_key}: {str(e)}")
+    def post_comment(self, story_key: str, comment_text: str) -> bool:
+        """
+        Publica un comentario en una historia de Jira.
+
+        Args:
+            story_key: Clave de la historia (ej: PROJ-123)
+            comment_text: Texto del comentario a publicar
+
+        Returns:
+            True si se publicó exitosamente, False en caso contrario
+        """
+        try:
+            self.jira.add_comment(story_key, comment_text)
+            return True
+        except Exception as e:
+            raise Exception(f"Error posting comment to {story_key}: {str(e)}")
+

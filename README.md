@@ -29,6 +29,7 @@ As a software architect, you spend hours reviewing user stories, identifying mis
 - **Test Case Generation**: Automatically generates comprehensive test cases in Gherkin format (Given-When-Then)
 - **Technical Task Breakdown**: Decomposes stories into concrete, implementable tasks (1-4 hours each)
 - **Fetch Before Analyze**: Preview Jira story information before spending AI tokens
+- **Post to Jira**: Publish analysis directly as a comment in Jira with editable preview
 - **User Context Notes**: Add architectural constraints, security requirements, or technical concerns directly into the analysis
 - **Interactive Refinement**: Ask follow-up questions to drill into specific technical aspects
 - **Professional Export**: Generate PDF/DOCX reports for design reviews and documentation
@@ -316,23 +317,29 @@ src/
 │   ├── _create_spanish_prompt()
 │   └── _create_test_cases_prompt()  # NEW
 │
-├── jira_client.py          # Jira API integration (150+ lines)
+├── jira_client.py          # Jira API integration (180+ lines)
 │   ├── JiraClient
 │   ├── get_user_story()   # Fetch story with flexible AC field
-│   ├── get_all_fields()   # NEW: Debug tool for field discovery
+│   ├── get_all_fields()   # Debug tool for field discovery
+│   ├── post_comment()     # NEW: Post analysis to Jira
 │   └── from_env()         # Factory from .env config
+│
+├── jira_formatter.py       # NEW: Markdown to Jira converter (100+ lines)
+│   ├── markdown_to_jira() # Convert MD to Jira markup
+│   └── prepare_analysis_for_jira()  # Format with header
 │
 ├── settings_window.py      # Configuration UI (200+ lines)
 │   ├── SettingsWindow
 │   ├── Jira credentials
-│   ├── AC field config    # NEW: Multiple fields support
+│   ├── AC field config    # Multiple fields support
 │   ├── AI API keys
 │   └── Model selection
 │
-├── i18n.py                 # Internationalization (150+ lines)
+├── i18n.py                 # Internationalization (200+ lines)
 │   ├── I18n
 │   ├── English translations
 │   ├── Spanish translations
+│   ├── Jira posting translations  # NEW
 │   └── get() / set_language()
 │
 ├── export_utils.py         # Export functionality (200+ lines)
@@ -545,11 +552,27 @@ python src/main.py
 4. Add architectural notes if needed
 5. Click "Analyze Story" → Generate AI analysis
 6. Click "Generate Test Cases" → Create Gherkin test scenarios
-7. Export to PDF/DOCX for documentation
+7. Click "Post to Jira" → Edit and publish analysis as comment (optional)
+8. Export to PDF/DOCX for documentation
 
 **Quick Analysis (Direct)**
 1. Enter Story ID
 2. Click "Analyze Story" → Fetches and analyzes in one step
+3. Click "Post to Jira" → Publish directly to story
+
+**Post to Jira Workflow**
+1. After analyzing a story, click "Post to Jira"
+2. Review the auto-converted Jira markup format
+3. Edit the comment if needed (add/remove sections, adjust wording)
+4. Click "Post Comment" to publish
+5. Analysis appears as a comment in the Jira story
+
+**Benefits of Posting to Jira:**
+- Close the feedback loop - analysis stays with the story
+- Team members see gaps and questions directly in Jira
+- No need to copy/paste or attach files
+- Automatic format conversion (Markdown → Jira markup)
+- Editable before posting - customize for your audience
 
 **Before Sprint Planning**
 1. Fetch story to verify completeness

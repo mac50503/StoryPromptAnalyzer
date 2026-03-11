@@ -153,7 +153,16 @@ class StoryAnalyzerGUI:
             command=self._export_analysis,
             state="disabled"
         )
-        self.export_button.grid(row=0, column=6)
+        self.export_button.grid(row=0, column=6, padx=(0, 5))
+        
+        # Botón de publicar en Jira
+        self.post_to_jira_button = ttk.Button(
+            input_frame,
+            text=self.i18n.get("post_to_jira_button"),
+            command=self._open_post_to_jira_dialog,
+            state="disabled"
+        )
+        self.post_to_jira_button.grid(row=0, column=7)
         
         # Selector de proveedor
         ttk.Label(input_frame, text=self.i18n.get("provider_label")).grid(row=1, column=0, sticky=tk.W, padx=(0, 10), pady=(10, 0))
@@ -367,6 +376,7 @@ class StoryAnalyzerGUI:
         self.current_story_data = None
         self.followup_button.config(state="disabled")
         self.export_button.config(state="disabled")
+        self.post_to_jira_button.config(state="disabled")
         self.generate_tests_button.config(state="disabled")
         
         self.status_var.set(self.i18n.get("status_fetching", story_id=story_id))
@@ -629,6 +639,7 @@ Ready to analyze! Click "Analyze Story" to generate AI analysis.
             self.current_story_data = None
             self.followup_button.config(state="disabled")
             self.export_button.config(state="disabled")
+            self.post_to_jira_button.config(state="disabled")
             self.generate_tests_button.config(state="disabled")
             
             self.status_var.set(self.i18n.get("status_fetching", story_id=story_id))
@@ -706,6 +717,7 @@ Ready to analyze! Click "Analyze Story" to generate AI analysis.
             # Habilitar campo de seguimiento
             self.followup_button.config(state="normal")
             self.export_button.config(state="normal")
+            self.post_to_jira_button.config(state="normal")
             self.generate_tests_button.config(state="normal")
             
         except Exception as e:
@@ -905,6 +917,124 @@ Priority: {story_data['priority']}
                     self.i18n.get("error_export", error=str(e))
                 )
                 self.status_var.set(self.i18n.get("status_error"))
+    
+    def _open_post_to_jira_dialog(self) -> None:
+        """Abre un diálogo para editar y publicar el comentario en Jira."""
+        if not self.current_story_data:
+            messagebox.showwarning(
+                self.i18n.get("warning"),
+                self.i18n.get("warning_no_analysis")
+            )
+            return
+        
+        # Obtener contenido del análisis
+        content = self.output_text.get_all_text()
+        
+        if not content.strip():
+            messagebox.showwarning(
+                self.i18n.get("warning"),
+                self.i18n.get("warning_empty_analysis")
+            )
+            return
+        
+        # Crear ventana de diálogo
+        dialog = tk.Toplevel(self.root)
+        dialog.title(self.i18n.get("edit_comment_title"))
+        dialog.geometry("800x600")
+        dialog.transient(self.root)
+        dialog.grab_set()
+        
+        # Frame principal
+        main_frame = ttk.Frame(dialog, padding="10")
+        main_frame.pack(fill=tk.BOTH, expand=True)
+        
+        # Label
+        ttk.Label(
+            main_frame,
+            text=self.i18n.get("comment_preview_label"),
+            font=("Arial", 10, "bold")
+        ).pack(anchor=tk.W, pady=(0, 5))
+        
+        # Text widget editable con scrollbar
+        text_frame = ttk.Frame(main_frame)
+        text_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
+        
+        scrollbar = ttk.Scrollbar(text_frame)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        comment_text = tk.Text(
+            text_frame,
+            wrap=tk.WORD,
+            yscrollcommand=scrollbar.set,
+            font=("Courier", 10)
+        )
+        comment_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.config(command=comment_text.yview)
+        
+        # Convertir a formato Jira y mostrar
+        from src.jira_formatter import prepare_analysis_for_jira
+        jira_formatted = prepare_analysis_for_jira(content, self.current_story_data['key'])
+        comment_text.insert("1.0", jira_formatted)
+        
+        # Frame de botones
+        button_frame = ttk.Frame(main_frame)
+        button_frame.pack(fill=tk.X)
+        
+        def post_comment():
+            """Publica el comentario editado en Jira."""
+            edited_comment = comment_text.get("1.0", tk.END).strip()
+            
+            if not edited_comment:
+                messagebox.showwarning(
+                    self.i18n.get("warning"),
+                    self.i18n.get("warning_empty_analysis")
+                )
+                return
+            
+            # Confirmar antes de publicar
+            if messagebox.askyesno(
+                self.i18n.get("confirm_post_title"),
+                self.i18n.get("confirm_post_message", story_id=self.current_story_data['key'])
+            ):
+                try:
+                    self.status_var.set(
+                        self.i18n.get("status_posting_comment", story_id=self.current_story_data['key'])
+                    )
+                    dialog.update()
+                    
+                    # Publicar comentario
+                    self.jira_client.post_comment(self.current_story_data['key'], edited_comment)
+                    
+                    self.status_var.set(
+                        self.i18n.get("status_comment_posted", story_id=self.current_story_data['key'])
+                    )
+                    
+                    messagebox.showinfo(
+                        self.i18n.get("success"),
+                        self.i18n.get("status_comment_posted", story_id=self.current_story_data['key'])
+                    )
+                    
+                    dialog.destroy()
+                    
+                except Exception as e:
+                    messagebox.showerror(
+                        self.i18n.get("error"),
+                        self.i18n.get("error_post_comment", error=str(e))
+                    )
+                    self.status_var.set(self.i18n.get("status_error"))
+        
+        # Botones
+        ttk.Button(
+            button_frame,
+            text=self.i18n.get("post_comment_button"),
+            command=post_comment
+        ).pack(side=tk.RIGHT, padx=(5, 0))
+        
+        ttk.Button(
+            button_frame,
+            text=self.i18n.get("cancel_button"),
+            command=dialog.destroy
+        ).pack(side=tk.RIGHT)
     
     def _analyze_sprint(self) -> None:
         """Analiza múltiples historias de usuario como un sprint."""
