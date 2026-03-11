@@ -147,6 +147,14 @@ explicitly provided. DO NOT invent or assume information not present.
   - CRITICAL ANTI-HALLUCINATION RULES
   - CONSTRUCTIVE APPROACH
 </guidelines>
+
+<example_quality>
+  Good vs Bad examples for:
+  - Technical Tasks (specific vs vague)
+  - Blockers (actionable vs generic)
+  - Risks (detailed vs superficial)
+  - Next Steps (concrete vs unclear)
+</example_quality>
 ```
 
 **Key Design Decisions:**
@@ -155,6 +163,7 @@ explicitly provided. DO NOT invent or assume information not present.
 - Explicit reasoning steps (chain-of-thought)
 - Dynamic context warnings (adapts to story quality)
 - Strict anti-hallucination rules (prevents invented details)
+- Few-shot learning examples (Good vs Bad patterns)
 - Concise format (5 sections vs 7, scannable in <1 minute)
 - Technical task breakdown (ready for Jira subtasks)
 
