@@ -22,6 +22,7 @@ As a software architect, you spend hours reviewing user stories, identifying mis
 
 ### For Architects & Technical Leads
 - **Sprint Analysis**: Analyze multiple stories together, identify dependencies, and generate implementation work plan
+- **Blaze Rules Context Mode**: Generate optimized prompts for Kiro AI to search Blaze Rules codebases with auto-extracted keywords
 - **Dependency Detection**: Automatically identifies technical, data, and functional dependencies between stories
 - **Risk Assessment**: Evaluates sprint risks and suggests mitigation strategies
 - **Implementation Roadmap**: Generates 4-phase work plan with timeline and milestones
@@ -44,6 +45,7 @@ As a software architect, you spend hours reviewing user stories, identifying mis
   - Single Story: Concise 5-section analysis with technical tasks
   - Sprint Analysis: 9-section consolidated report with dependencies
   - Test Cases: Comprehensive Gherkin scenarios (happy path, edge cases, errors)
+- **Blaze Rules Context Mode**: Special mode for IBM Blaze Advisor projects that generates Kiro-optimized prompts
 
 ## 🚀 Advanced Prompt Engineering
 
@@ -625,6 +627,64 @@ python src/main.py
 - Detect missing dependencies early
 - Generate implementation roadmap for the team
 - Create executive summary for stakeholders
+
+### Blaze Rules Context Mode (NEW!)
+
+**For IBM Blaze Advisor Business Rules Projects**
+
+When working with Blaze Rules codebases (crew pay, legality, business rules), this mode generates optimized prompts for Kiro AI to search and analyze the Java codebase.
+
+**How It Works:**
+1. Select "Blaze Rules Context" radio button
+2. Analyze your story (standard AI analysis)
+3. App automatically extracts specific keywords from the analysis
+4. Generates a clean, focused prompt for Kiro
+5. Click "📋 Copy Kiro Prompt" to copy to clipboard
+6. Paste in Kiro when you open the Blaze Java project
+
+**What You Get:**
+```
+STORY: Holiday pay for S labeled reserve trips with EDD
+
+SUGGESTED KEYWORDS TO SEARCH:
+Edd, ReserveTrip, Bucket, HolidayPay
+
+YOUR TASK:
+1. Search in all the project for relevant Blaze functions (fcn*) or rulesets (rs*)
+2. Identify the MOST SPECIFIC functions that need modification
+3. For each function found:
+   - Explain what changes are needed
+   - Identify which RuleFlows use it
+   - Suggest specific test cases
+4. Identify potential regression risks
+```
+
+**Benefits:**
+- ✅ **Cost-effective**: Only 1 AI call instead of multiple searches
+- ✅ **Keyword extraction**: Automatically identifies specific terms like "HolidayPay", "ReserveTrip", "Edd"
+- ✅ **Clean prompts**: No images, no long analysis, just what Kiro needs
+- ✅ **Generic**: Works with any Blaze project structure
+- ✅ **Focused search**: Kiro finds top 3-5 most relevant functions
+
+**Example Keywords Extracted:**
+- "holiday pay for reserve trips" → `HolidayPay, ReserveTrip`
+- "EDD leg on holiday" → `Edd, HolidayPay, Leg`
+- "red eye premium calculation" → `Redeye, Premium`
+- "per diem for international flights" → `Perdiem, International`
+
+**Typical Workflow:**
+1. Analyze story in this app (understand requirements)
+2. Copy generated Kiro prompt
+3. Open Blaze Java project in Kiro
+4. Paste prompt → Kiro searches codebase
+5. Kiro identifies specific functions like `fcnCalculateHolidayPayBucketFromReserve`
+6. Kiro explains what changes are needed in each function
+
+**Why This Approach:**
+- Separates analysis (this app) from code search (Kiro)
+- Leverages each tool's strengths
+- More economical than multiple AI calls
+- Kiro has direct access to actual Java code, not just documentation
 
 ## 📊 ROI for Technical Teams
 

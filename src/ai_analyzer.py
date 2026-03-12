@@ -494,22 +494,26 @@ Malo: "Aclarar requisitos"
         
         return "\n".join(formatted)
 
-    def analyze_story(self, story_data: Dict[str, Any], callback=None) -> str:
+    def analyze_story(self, story_data: Dict[str, Any], callback=None, use_kb_context=False) -> str:
         """
         Analiza una historia de usuario usando IA con streaming.
         
         Args:
             story_data: Datos de la historia de usuario
             callback: Función opcional para recibir chunks en tiempo real
+            use_kb_context: Si True, genera prompt para usar en Kiro con proyecto Blaze
             
         Returns:
             Análisis generado por la IA
         """
         try:
-            prompt = self.create_analysis_prompt(story_data)
+            # Si se solicita KB context, generar prompt para Kiro
+            if use_kb_context:
+                return self._analyze_with_kb_context(story_data, callback)
             
-            # Definir el rol del sistema según el idioma
-            system_role = self._get_system_role()
+            # Análisis estándar sin KB
+            prompt = self.create_analysis_prompt(story_data)
+            system_role = self._get_system_role(has_kb_context=False)
             
             response = completion(
                 model=self.model,
@@ -529,7 +533,6 @@ Malo: "Aclarar requisitos"
                     delta = chunk.choices[0].delta
                     if hasattr(delta, 'content') and delta.content:
                         full_content += delta.content
-                        # Llamar callback si existe para actualizar UI en tiempo real
                         if callback:
                             callback(delta.content)
             
@@ -537,6 +540,150 @@ Malo: "Aclarar requisitos"
             
         except Exception as e:
             raise Exception(f"Error al analizar la historia: {str(e)}")
+    
+    def _analyze_with_kb_context(self, story_data: Dict[str, Any], callback) -> str:
+        """
+        Genera análisis con prompt para usar en Kiro en el proyecto Blaze.
+        
+        Args:
+            story_data: Datos de la historia
+            callback: Callback para UI
+            
+        Returns:
+            Análisis con prompt para Kiro
+        """
+        
+        # Análisis estándar primero
+        if callback:
+            callback("📋 ANALYZING USER STORY...\n")
+            callback("="*80 + "\n\n")
+        
+        prompt = self.create_analysis_prompt(story_data)
+        system_role = self._get_system_role(has_kb_context=False)
+        
+        response = completion(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": system_role},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.2,
+            max_tokens=1200,
+            stream=True
+        )
+        
+        analysis = ""
+        for chunk in response:
+            if hasattr(chunk, 'choices') and len(chunk.choices) > 0:
+                delta = chunk.choices[0].delta
+                if hasattr(delta, 'content') and delta.content:
+                    analysis += delta.content
+                    if callback:
+                        callback(delta.content)
+        
+        # Generar prompt para Kiro
+        if callback:
+            callback("\n\n" + "="*80 + "\n")
+            callback("🤖 PROMPT FOR KIRO\n")
+            callback("="*80 + "\n\n")
+            callback("Copy this prompt and paste it in Kiro when you open the Blaze Java project:\n\n")
+            callback("-" * 80 + "\n\n")
+        
+        kiro_prompt = self._generate_kiro_prompt(story_data, analysis)
+        
+        if callback:
+            callback(kiro_prompt)
+            callback("\n\n" + "-" * 80 + "\n")
+        
+        return analysis + "\n\n" + "="*80 + "\n\n" + "PROMPT FOR KIRO:\n\n" + kiro_prompt
+    
+    def _generate_kiro_prompt(self, story_data: Dict[str, Any], analysis: str) -> str:
+        """
+        Genera un prompt optimizado para usar en Kiro en el proyecto Blaze.
+        
+        Args:
+            story_data: Datos de la historia
+            analysis: Análisis ya generado (se usa para extraer keywords)
+            
+        Returns:
+            Prompt formateado para Kiro
+        """
+        title = story_data.get('title', 'N/A')
+        description = story_data.get('description', 'N/A')
+        acceptance = story_data.get('acceptance_criteria', 'N/A')
+        
+        # Limpiar imágenes y referencias de Jira del texto
+        def clean_text(text):
+            if not text or text == 'N/A':
+                return text
+            # Remover referencias a imágenes
+            import re
+            text = re.sub(r'!\[.*?\]\(.*?\)', '', text)  # Markdown images
+            text = re.sub(r'<img.*?>', '', text)  # HTML images
+            text = re.sub(r'\[image:.*?\]', '', text)  # Jira image references
+            text = re.sub(r'!.*?\|.*?!', '', text)  # Jira image syntax
+            # Limpiar líneas vacías múltiples
+            text = re.sub(r'\n\s*\n\s*\n', '\n\n', text)
+            return text.strip()
+        
+        title = clean_text(title)
+        description = clean_text(description)
+        acceptance = clean_text(acceptance)
+        
+        # Extraer keywords específicos del análisis
+        def extract_specific_keywords(text):
+            """Extrae keywords técnicos específicos del análisis."""
+            import re
+            keywords = set()
+            
+            # Buscar términos técnicos específicos (compuestos)
+            specific_terms = [
+                'holiday pay', 'reserve trip', 'reserve block', 'reserve guarantee',
+                'red eye', 'redeye', 'edd', 'early duty day', 'late duty day', 'ldd',
+                'per diem', 'perdiem', 'staff bank', 'longevity', 'experience pay',
+                'deadhead', 'charter', 'mileage', 'productivity pay', 'split guarantee',
+                'duty period', 'schedule period', 'trip pay', 'leg pay', 'bucket',
+                'conus', 'oconus', 'qualification', 'training', 'legality', 'faa rest'
+            ]
+            
+            text_lower = text.lower()
+            for term in specific_terms:
+                if term in text_lower:
+                    keywords.add(term.title().replace(' ', ''))
+            
+            return list(keywords)
+        
+        keywords = extract_specific_keywords(analysis + ' ' + title + ' ' + description)
+        keywords_hint = f"\n\nSUGGESTED KEYWORDS TO SEARCH:\nBased on the analysis, look for functions containing: {', '.join(keywords[:5])}" if keywords else ""
+        
+        # Crear prompt conciso con keywords específicos
+        prompt = f"""I need help implementing this Blaze Rules user story:
+
+STORY: {title}
+
+DESCRIPTION:
+{description}
+
+ACCEPTANCE CRITERIA:
+{acceptance}{keywords_hint}
+
+YOUR TASK:
+1. Search in all the project for relevant Blaze functions (fcn*) or rulesets (rs*)
+2. Identify the MOST SPECIFIC functions that need modification based on the business logic
+3. For each function found:
+   - Explain what changes are needed
+   - Identify which RuleFlows use it
+   - Suggest specific test cases
+4. Identify potential regression risks
+
+SEARCH STRATEGY:
+- Prioritize functions that match multiple keywords from the suggested list
+- Look for functions with these keywords in their names or implementation
+- Check the function implementation to confirm it handles the exact scenario
+
+Start by searching the entire project and show me the top 3-5 most relevant functions."""
+        
+        return prompt
     
     def analyze_sprint(self, stories_data: list, callback=None) -> str:
         """
@@ -1286,13 +1433,45 @@ Acceptance Criteria: {story_data.get('acceptance_criteria', 'N/A')}"""
         except Exception as e:
             raise Exception(f"Error processing follow-up question: {str(e)}")
     
-    def _get_system_role(self) -> str:
+    def _get_system_role(self, has_kb_context: bool = False) -> str:
         """Obtiene el rol del sistema según el idioma."""
-        if self.language == "es":
-            return """Eres un arquitecto de software senior y un ingeniero de QA especializado en analizar historias de usuario de Jira e identificar requisitos faltantes y casos de prueba. 
+        base_role_es = """Eres un arquitecto de software senior y un ingeniero de QA especializado en analizar historias de usuario de Jira e identificar requisitos faltantes y casos de prueba."""
+        
+        base_role_en = """You are a senior software architect and QA engineer specialized in analyzing Jira user stories and identifying missing requirements and test cases."""
+        
+        kb_addition_es = """
+
+CONTEXTO ESPECIAL - BLAZE RULES: Esta historia menciona funciones/rulesets de IBM Blaze Advisor (Business Rules Engine). Cuando analices:
+- Identifica el impacto en los RuleFlows mencionados
+- Considera dependencias entre funciones
+- Sugiere casos de prueba específicos para reglas de negocio
+- Menciona riesgos de regresión en RuleFlows afectados"""
+
+        kb_addition_en = """
+
+SPECIAL CONTEXT - BLAZE RULES: This story mentions IBM Blaze Advisor functions/rulesets (Business Rules Engine). When analyzing:
+- Identify impact on mentioned RuleFlows
+- Consider dependencies between functions
+- Suggest specific test cases for business rules
+- Mention regression risks in affected RuleFlows"""
+
+        critical_rule_es = """
 
 REGLA CRÍTICA: Antes de producir la respuesta final, razona cuidadosamente sobre los requisitos y posibles ambigüedades. Basa tu análisis ÚNICAMENTE en la información explícitamente proporcionada en el story. NO inventes, asumas o agregues información que no esté presente en el texto. Usa SOLO los términos y conceptos mencionados en el story y las notas del analista."""
-        else:
-            return """You are a senior software architect and QA engineer specialized in analyzing Jira user stories and identifying missing requirements and test cases. 
+
+        critical_rule_en = """
 
 CRITICAL RULE: Before producing the final answer, carefully reason about the requirements and possible ambiguities. Base your analysis EXCLUSIVELY on information explicitly provided in the story. DO NOT invent, assume, or add information that is not present in the text. Use ONLY the terms and concepts mentioned in the story and analyst notes."""
+        
+        if self.language == "es":
+            role = base_role_es
+            if has_kb_context:
+                role += kb_addition_es
+            role += critical_rule_es
+            return role
+        else:
+            role = base_role_en
+            if has_kb_context:
+                role += kb_addition_en
+            role += critical_rule_en
+            return role

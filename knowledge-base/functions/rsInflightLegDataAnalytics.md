@@ -1,0 +1,17 @@
+# rsInflightLegDataAnalytics
+
+## Metadata
+- **Tipo**: SRL Ruleset
+- **Retorna**: N/A
+- **Ubicación**: `CrewRulesRepository\TechnicalLibrary\Pay\InflightPay\Rulesets\rsInflightLegDataAnalytics`
+
+## Propósito
+*(Sin descripción)*
+
+## Parámetros
+
+| Nombre | Tipo | Descripción |
+|--------|------|-------------|
+| theLegPay | LegPay | |
+| theGlobalDataCache | GlobalDataCache | |
+

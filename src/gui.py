@@ -38,6 +38,9 @@ class StoryAnalyzerGUI:
         self.root.title(self.i18n.get("app_title"))
         self.root.geometry("900x700")
         
+        # Configurar el protocolo de cierre de ventana
+        self.root.protocol("WM_DELETE_WINDOW", self._on_closing)
+        
         # Inicializar clientes
         self.jira_client: Optional[JiraClient] = None
         self.ai_analyzer: Optional[AIAnalyzer] = None
@@ -164,6 +167,19 @@ class StoryAnalyzerGUI:
         )
         self.post_to_jira_button.grid(row=0, column=7)
         
+        # Botón de copiar prompt para Kiro (solo visible en modo Blaze)
+        self.copy_kiro_prompt_button = ttk.Button(
+            input_frame,
+            text="📋 Copy Kiro Prompt",
+            command=self._copy_kiro_prompt,
+            state="disabled"
+        )
+        self.copy_kiro_prompt_button.grid(row=0, column=8, padx=(5, 0))
+        self.copy_kiro_prompt_button.grid_remove()  # Ocultar por defecto
+        
+        # Variable para guardar el último prompt de Kiro generado
+        self.last_kiro_prompt = None
+        
         # Selector de proveedor
         ttk.Label(input_frame, text=self.i18n.get("provider_label")).grid(row=1, column=0, sticky=tk.W, padx=(0, 10), pady=(10, 0))
         
@@ -211,6 +227,27 @@ class StoryAnalyzerGUI:
             wrap=tk.WORD
         )
         self.user_notes_text.grid(row=3, column=1, columnspan=2, sticky=(tk.W, tk.E), padx=(0, 10), pady=(10, 0))
+        
+        # Analysis mode selection
+        ttk.Label(input_frame, text=self.i18n.get("analysis_mode_label")).grid(row=4, column=0, sticky=tk.W, padx=(0, 10), pady=(10, 0))
+        
+        self.analysis_mode_var = tk.StringVar(value="standard")
+        mode_frame = ttk.Frame(input_frame)
+        mode_frame.grid(row=4, column=1, columnspan=2, sticky=tk.W, pady=(10, 0))
+        
+        ttk.Radiobutton(
+            mode_frame,
+            text=self.i18n.get("analysis_mode_standard"),
+            variable=self.analysis_mode_var,
+            value="standard"
+        ).pack(side=tk.LEFT, padx=(0, 15))
+        
+        ttk.Radiobutton(
+            mode_frame,
+            text=self.i18n.get("analysis_mode_blaze"),
+            variable=self.analysis_mode_var,
+            value="blaze"
+        ).pack(side=tk.LEFT)
         
         # Frame de salida
         output_frame = ttk.LabelFrame(self.single_tab, text=self.i18n.get("analysis_section"), padding="10")
@@ -353,6 +390,18 @@ class StoryAnalyzerGUI:
         # Ya no inicializamos los clientes al inicio
         # Se inicializarán cuando el usuario presione "Analizar Historia"
         self.status_var.set(self.i18n.get("status_ready"))
+    
+    def _on_closing(self) -> None:
+        """Maneja el cierre de la ventana correctamente."""
+        try:
+            # Destruir la ventana y terminar el proceso
+            self.root.quit()
+            self.root.destroy()
+        except:
+            pass
+        finally:
+            # Asegurar que el proceso termine
+            sys.exit(0)
     
     def _fetch_story(self) -> None:
         """Obtiene y muestra la información de Jira sin analizar."""
@@ -693,13 +742,23 @@ Ready to analyze! Click "Analyze Story" to generate AI analysis.
             self.ai_analyzer.model = self._get_full_model_name()
             self.ai_analyzer.language = self.i18n.language
             
+            # Check if Blaze Rules Context mode is enabled
+            use_kb_context = False
+            if self.analysis_mode_var.get() == "blaze":
+                use_kb_context = True
+                self.output_text.append_text(f"\n{'='*80}\n", 'heading')
+                self.output_text.append_text("🔍 BLAZE RULES CONTEXT MODE\n", 'heading')
+                self.output_text.append_text(f"{'='*80}\n\n", 'heading')
+                self.output_text.append_text("This mode will generate a Kiro prompt that you can use in the Blaze Java project.\n\n", 'normal')
+                self.output_text.append_text(f"{'='*80}\n\n", 'normal')
+            
             # Si ya hay contenido (fetch previo), agregar separador
             current_content = self.output_text.get_all_text().strip()
-            if current_content:
+            if current_content and not use_kb_context:
                 self.output_text.append_text(f"\n\n{'='*80}\n", 'normal')
                 self.output_text.append_text("AI ANALYSIS\n", 'normal')
                 self.output_text.append_text(f"{'='*80}\n\n", 'normal')
-            else:
+            elif not current_content:
                 # Mostrar encabezado de la historia
                 self._display_story_header(self.current_story_data)
             
@@ -713,7 +772,26 @@ Ready to analyze! Click "Analyze Story" to generate AI analysis.
                 self.root.update()
             
             # Analizar con IA (con streaming)
-            analysis = self.ai_analyzer.analyze_story(self.current_story_data, callback=stream_callback)
+            analysis = self.ai_analyzer.analyze_story(
+                self.current_story_data, 
+                callback=stream_callback,
+                use_kb_context=use_kb_context
+            )
+            
+            # Si es modo Blaze, extraer y guardar el prompt de Kiro
+            if use_kb_context:
+                # Extraer el prompt de Kiro del análisis
+                if "PROMPT FOR KIRO:" in analysis:
+                    parts = analysis.split("PROMPT FOR KIRO:")
+                    if len(parts) > 1:
+                        self.last_kiro_prompt = parts[1].strip()
+                        # Mostrar botón de copiar
+                        self.copy_kiro_prompt_button.grid()
+                        self.copy_kiro_prompt_button.config(state="normal")
+            else:
+                # Ocultar botón si no es modo Blaze
+                self.copy_kiro_prompt_button.grid_remove()
+                self.last_kiro_prompt = None
             
             # Guardar en historial
             self.conversation_history.append({
@@ -926,6 +1004,33 @@ Priority: {story_data['priority']}
                     self.i18n.get("error_export", error=str(e))
                 )
                 self.status_var.set(self.i18n.get("status_error"))
+    
+    def _copy_kiro_prompt(self) -> None:
+        """Copia el prompt de Kiro al portapapeles."""
+        if not self.last_kiro_prompt:
+            messagebox.showwarning(
+                "Warning",
+                "No Kiro prompt available. Please analyze a story in Blaze Rules Context mode first."
+            )
+            return
+        
+        try:
+            # Copiar al portapapeles
+            self.root.clipboard_clear()
+            self.root.clipboard_append(self.last_kiro_prompt)
+            self.root.update()  # Necesario para que el clipboard persista
+            
+            messagebox.showinfo(
+                "Success",
+                "Kiro prompt copied to clipboard!\n\nYou can now paste it in Kiro when you open the Blaze Java project."
+            )
+            self.status_var.set("✅ Kiro prompt copied to clipboard")
+            
+        except Exception as e:
+            messagebox.showerror(
+                "Error",
+                f"Failed to copy to clipboard: {str(e)}"
+            )
     
     def _open_post_to_jira_dialog(self) -> None:
         """Abre un diálogo para editar y publicar el comentario en Jira."""
