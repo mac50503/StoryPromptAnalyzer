@@ -244,6 +244,7 @@ For analyzing multiple stories together, the system uses a specialized prompt th
 **Recommended Models:**
 - OpenAI: `gpt-4-turbo` (best balance)
 - Anthropic: `claude-3-5-sonnet-20241022` (excellent instruction following)
+- Groq: `llama-3.1-70b-versatile` (free, fast, good quality)
 
 ## 🏗️ Architecture
 
@@ -518,7 +519,7 @@ cp .env.example .env
 # Edit .env with your credentials:
 # - JIRA_URL, JIRA_EMAIL, JIRA_API_TOKEN
 # - JIRA_ACCEPTANCE_CRITERIA_FIELD (use Debug 🔍 to find yours)
-# - OPENAI_API_KEY or ANTHROPIC_API_KEY
+# - OPENAI_API_KEY, ANTHROPIC_API_KEY, or GROQ_API_KEY
 # - AI_MODEL (default: gpt-4-turbo)
 
 # Run
@@ -539,8 +540,16 @@ python src/main.py
    - Add to Settings or .env
 
 3. **Configure AI:**
-   - Add OpenAI or Anthropic API key
+   - **Option 1 (Free):** Get Groq API key from https://console.groq.com (free tier available)
+   - **Option 2 (Paid):** Add OpenAI API key from https://platform.openai.com
+   - **Option 3 (Paid):** Add Anthropic API key from https://console.anthropic.com
    - Select your preferred model
+
+**Groq (Free Option):**
+- Free API with generous rate limits
+- Very fast inference (5-8 seconds per analysis)
+- Uses Llama 3.1 70B (comparable to GPT-3.5 quality)
+- Perfect for getting started without cost
 
 ## 🎯 Usage for Architects
 

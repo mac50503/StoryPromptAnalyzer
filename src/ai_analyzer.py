@@ -22,6 +22,7 @@ class AIAnalyzer:
         # Configurar las API keys desde variables de entorno
         os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY", "")
         os.environ["ANTHROPIC_API_KEY"] = os.getenv("ANTHROPIC_API_KEY", "")
+        os.environ["GROQ_API_KEY"] = os.getenv("GROQ_API_KEY", "")
 
     def create_analysis_prompt(self, story_data: Dict[str, Any]) -> str:
         """

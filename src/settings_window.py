@@ -123,14 +123,25 @@ class SettingsWindow:
         # Separador
         ttk.Separator(fields_frame, orient=tk.HORIZONTAL).grid(row=12, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=20)
         
+        # Sección Groq
+        groq_label = ttk.Label(fields_frame, text="Groq (Free)", font=("Arial", 11, "bold"))
+        groq_label.grid(row=13, column=0, columnspan=2, sticky=tk.W, pady=(0, 10))
+        
+        ttk.Label(fields_frame, text="Groq API Key:").grid(row=14, column=0, sticky=tk.W, pady=5)
+        self.groq_key_entry = ttk.Entry(fields_frame, width=50, show="*")
+        self.groq_key_entry.grid(row=14, column=1, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
+        
+        # Separador
+        ttk.Separator(fields_frame, orient=tk.HORIZONTAL).grid(row=15, column=0, columnspan=2, sticky=(tk.W, tk.E), pady=20)
+        
         # Sección General
         general_label = ttk.Label(fields_frame, text=self.i18n.get("general_section"), font=("Arial", 11, "bold"))
-        general_label.grid(row=13, column=0, columnspan=2, sticky=tk.W, pady=(0, 10))
+        general_label.grid(row=16, column=0, columnspan=2, sticky=tk.W, pady=(0, 10))
         
         # Modelo por defecto
-        ttk.Label(fields_frame, text=self.i18n.get("default_model")).grid(row=14, column=0, sticky=tk.W, pady=5)
+        ttk.Label(fields_frame, text=self.i18n.get("default_model")).grid(row=17, column=0, sticky=tk.W, pady=5)
         self.model_entry = ttk.Entry(fields_frame, width=50)
-        self.model_entry.grid(row=14, column=1, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
+        self.model_entry.grid(row=17, column=1, sticky=(tk.W, tk.E), pady=5, padx=(10, 0))
         
         # Configurar peso de columnas
         fields_frame.columnconfigure(1, weight=1)
@@ -161,6 +172,7 @@ class SettingsWindow:
         self.jira_ac_field_entry.insert(0, os.getenv("JIRA_ACCEPTANCE_CRITERIA_FIELD", "customfield_10054"))
         self.openai_key_entry.insert(0, os.getenv("OPENAI_API_KEY", ""))
         self.anthropic_key_entry.insert(0, os.getenv("ANTHROPIC_API_KEY", ""))
+        self.groq_key_entry.insert(0, os.getenv("GROQ_API_KEY", ""))
         self.model_entry.insert(0, os.getenv("AI_MODEL", "gpt-4"))
 
     def _save_settings(self) -> None:
@@ -178,6 +190,7 @@ class SettingsWindow:
             set_key(self.env_file, "JIRA_ACCEPTANCE_CRITERIA_FIELD", self.jira_ac_field_entry.get())
             set_key(self.env_file, "OPENAI_API_KEY", self.openai_key_entry.get())
             set_key(self.env_file, "ANTHROPIC_API_KEY", self.anthropic_key_entry.get())
+            set_key(self.env_file, "GROQ_API_KEY", self.groq_key_entry.get())
             set_key(self.env_file, "AI_MODEL", self.model_entry.get())
             
             return True

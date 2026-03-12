@@ -187,7 +187,7 @@ class StoryAnalyzerGUI:
         provider_combo = ttk.Combobox(
             input_frame, 
             textvariable=self.provider_var,
-            values=["OpenAI", "Anthropic"],
+            values=["OpenAI", "Anthropic", "Groq (Free)"],
             state="readonly",
             width=28
         )
@@ -200,7 +200,8 @@ class StoryAnalyzerGUI:
         # Modelos por proveedor
         self.models_by_provider = {
             "OpenAI": ["gpt-4", "gpt-4-turbo", "gpt-3.5-turbo"],
-            "Anthropic": ["claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"]
+            "Anthropic": ["claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"],
+            "Groq (Free)": ["llama-3.3-70b-versatile", "llama-3.1-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"]
         }
         
         # Obtener modelo por defecto del .env
@@ -346,7 +347,7 @@ class StoryAnalyzerGUI:
         sprint_provider_combo = ttk.Combobox(
             sprint_input_frame, 
             textvariable=self.provider_var,
-            values=["OpenAI", "Anthropic"],
+            values=["OpenAI", "Anthropic", "Groq (Free)"],
             state="readonly",
             width=28
         )
@@ -656,6 +657,8 @@ Ready to analyze! Click "Analyze Story" to generate AI analysis.
         # LiteLLM requiere el formato: proveedor/modelo para algunos casos
         if provider == "Anthropic":
             return model  # Los modelos de Anthropic ya tienen el formato completo
+        elif provider == "Groq (Free)":
+            return f"groq/{model}"  # Groq necesita el prefijo
         else:
             return model  # OpenAI no necesita prefijo
 
