@@ -2,7 +2,8 @@
 
 An AI tool that analyzes user stories in Jira, identifies ambiguities or information gaps, and generates automated improvement recommendations using techniques from Prompt Engineering, applying knowledge and methodologies learned in the Prompt Engineering course.
 
-<img width="1345" height="1005" alt="image" src="https://github.com/user-attachments/assets/33d84051-8641-4e48-87e9-8132f8d420c9" />
+<img width="1356" height="1004" alt="image" src="https://github.com/user-attachments/assets/2214f7ca-594f-4db5-8336-6b7d8d9a3dae" />
+
 
 **Easy Configuration**
 
