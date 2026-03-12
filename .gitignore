@@ -47,3 +47,6 @@ dmypy.json
 # Environment variables
 .env
 .env.local
+
+# Project-specific knowledge base (contains proprietary Blaze Rules documentation)
+knowledge-base/
