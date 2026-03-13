@@ -48,5 +48,8 @@ dmypy.json
 .env
 .env.local
 
+# MCP configuration with real credentials (keep template in repo)
+powers/*/mcp.local.json
+
 # Project-specific knowledge base (contains proprietary Blaze Rules documentation)
 knowledge-base/

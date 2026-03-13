@@ -1,0 +1,20 @@
+{
+  "_comment": "⚠️ TEMPLATE FILE - DO NOT COMMIT REAL CREDENTIALS! Copy to mcp.local.json and edit with your real values.",
+  "mcpServers": {
+    "jira-story-analyzer": {
+      "command": "python",
+      "args": ["PLACEHOLDER_SERVER_PATH/server.py"],
+      "env": {
+        "JIRA_URL": "YOUR_JIRA_URL",
+        "JIRA_EMAIL": "YOUR_JIRA_EMAIL",
+        "JIRA_API_TOKEN": "YOUR_JIRA_API_TOKEN",
+        "JIRA_ACCEPTANCE_CRITERIA_FIELD": "customfield_10054",
+        "OPENAI_API_KEY": "OPENAI_API_KEY_ENV_VAR",
+        "ANTHROPIC_API_KEY": "ANTHROPIC_API_KEY_ENV_VAR",
+        "GROQ_API_KEY": "GROQ_API_KEY_ENV_VAR",
+        "AI_MODEL": "gpt-4-turbo",
+        "LANGUAGE": "en"
+      }
+    }
+  }
+}
