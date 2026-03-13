@@ -4,31 +4,89 @@ AI-powered analysis of Jira user stories to identify gaps, generate technical ta
 
 ## Quick Start
 
-1. **Install dependencies:**
+### Installation Options
+
+**Option 1: Install from GitHub (Recommended)**
+
+1. **Open Kiro Powers UI:**
+   - Command Palette (Ctrl+Shift+P) → "Powers: Configure"
+   - Or click Powers icon in sidebar
+
+2. **Add Custom Power:**
+   - Click "Add Custom Power"
+   - Select "GitHub Repository"
+   - Enter URL: `https://github.com/mac50503/StoryPromptAnalyzer`
+   - Kiro will find the power in `powers/jira-story-analyzer/`
+
+3. **Configure credentials:**
+   
+   After installation, you need to configure your credentials. Two options:
+   
+   **Option A: Edit Kiro's MCP config (Recommended)**
+   - Open `.kiro/settings/mcp.json` in your workspace
+   - Add the server configuration with your real credentials:
+   
+   ```json
+   {
+     "mcpServers": {
+       "jira-story-analyzer": {
+         "command": "python",
+         "args": ["<PATH_TO_POWER>/server.py"],
+         "env": {
+           "JIRA_URL": "https://your-company.atlassian.net",
+           "JIRA_EMAIL": "your.email@company.com",
+           "JIRA_API_TOKEN": "your_jira_token",
+           "JIRA_ACCEPTANCE_CRITERIA_FIELD": "customfield_10054",
+           "OPENAI_API_KEY": "your_openai_key",
+           "ANTHROPIC_API_KEY": "your_anthropic_key",
+           "GROQ_API_KEY": "your_groq_key",
+           "AI_MODEL": "gpt-4-turbo",
+           "LANGUAGE": "en"
+         }
+       }
+     }
+   }
+   ```
+   
+   **Option B: Use environment variables**
+   - Set environment variables in your system:
+   ```bash
+   export JIRA_URL="https://your-company.atlassian.net"
+   export JIRA_EMAIL="your.email@company.com"
+   export JIRA_API_TOKEN="your_jira_token"
+   export OPENAI_API_KEY="your_openai_key"
+   # etc...
+   ```
+
+4. **Reconnect the MCP server:**
+   - Command Palette → "MCP: Reconnect Server"
+   - Select "jira-story-analyzer"
+
+5. **Test:**
+   ```
+   Fetch story YOUR-STORY-ID
+   ```
+
+**Option 2: Install from Local Directory**
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/mac50503/StoryPromptAnalyzer.git
+   cd StoryPromptAnalyzer/powers/jira-story-analyzer
+   ```
+
+2. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
 
-2. **Configure credentials (IMPORTANT):**
-   
-   The `mcp.json` file in this repo contains PLACEHOLDERS only. To use this power:
-   
-   **Option A: Create local config (recommended for security)**
+3. **Create local config with your credentials:**
    ```bash
-   # Copy template to local config (not tracked by git)
    cp mcp.json mcp.local.json
-   
    # Edit mcp.local.json with your real credentials
-   # Then use mcp.local.json when installing the power in Kiro
    ```
    
-   **Option B: Edit mcp.json directly (less secure)**
-   ```bash
-   # Edit mcp.json with your credentials
-   # WARNING: Don't commit real credentials to git!
-   ```
-   
-   **Required replacements:**
+   **Required replacements in mcp.local.json:**
    - `PLACEHOLDER_SERVER_PATH` → Absolute path to `server.py`
    - `YOUR_JIRA_URL` → Your Jira instance URL
    - `YOUR_JIRA_EMAIL` → Your Jira email
@@ -37,25 +95,54 @@ AI-powered analysis of Jira user stories to identify gaps, generate technical ta
    - `ANTHROPIC_API_KEY_ENV_VAR` → Your Anthropic key (or env var name)
    - `GROQ_API_KEY_ENV_VAR` → Your Groq key (or env var name)
 
-3. **Install in Kiro:**
+4. **Install in Kiro:**
    - Open Kiro Powers UI
    - Click "Add Custom Power"
    - Select "Local Directory"
-   - Point to this directory
-   - When prompted for config, use `mcp.local.json` (if you created it)
+   - Point to: `<your-path>/StoryPromptAnalyzer/powers/jira-story-analyzer`
+   - When prompted for config, use `mcp.local.json`
 
-4. **Test:**
+5. **Test:**
    ```
-   Use fetch_story with story_id="YOUR-STORY-ID"
+   Fetch story YOUR-STORY-ID
    ```
 
-## Security Note
+### Getting API Keys
 
-⚠️ **Never commit real credentials to git!**
+**Jira API Token:**
+- Go to https://id.atlassian.com/manage-profile/security/api-tokens
+- Click "Create API token"
+- Copy the token
 
-- The `mcp.json` in this repo has PLACEHOLDERS only
-- Use `mcp.local.json` for your real credentials (already in .gitignore)
-- Or use environment variables for API keys
+**AI Provider (choose at least one):**
+
+**Option 1: Groq (Free)**
+- Go to https://console.groq.com
+- Create account (free)
+- Navigate to "API Keys"
+- Create new key
+- Recommended model: `groq/llama-3.3-70b-versatile`
+
+**Option 2: OpenAI (Paid)**
+- Go to https://platform.openai.com
+- Create API key
+- Recommended model: `gpt-4-turbo`
+
+**Option 3: Anthropic (Paid)**
+- Go to https://console.anthropic.com
+- Create API key
+- Recommended model: `claude-3-5-sonnet-20241022`
+
+### Finding Your Acceptance Criteria Field
+
+Different Jira instances use different custom fields. To find yours:
+
+1. Open any Jira story that has acceptance criteria
+2. Use the Jira REST API or inspect the story JSON
+3. Look for custom fields like `customfield_10054`, `customfield_10000`, etc.
+4. Common field names: `customfield_10054`, `customfield_10000`, `customfield_10007`
+
+**Note:** The power will try multiple common fields automatically, but specifying the correct one improves reliability.
 
 ## Features
 
@@ -88,3 +175,16 @@ Miguel Angel Cervantes Juarez
 ## License
 
 MIT
+
+## Security Note
+
+⚠️ **Never commit real credentials to git!**
+
+- The `mcp.json` in this repo has PLACEHOLDERS only
+- When installing from GitHub, configure credentials in `.kiro/settings/mcp.json` or use environment variables
+- When installing locally, use `mcp.local.json` for your real credentials (already in .gitignore)
+- The `.kiro/` folder (which may contain credentials) is also in .gitignore
+
+## Repository
+
+Part of [StoryPromptAnalyzer](https://github.com/mac50503/StoryPromptAnalyzer) project.

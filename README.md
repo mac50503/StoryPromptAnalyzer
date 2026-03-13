@@ -48,6 +48,74 @@ As a software architect, you spend hours reviewing user stories, identifying mis
   - Test Cases: Comprehensive Gherkin scenarios (happy path, edge cases, errors)
 - **Blaze Rules Context Mode**: Special mode for IBM Blaze Advisor projects that generates Kiro-optimized prompts
 
+## 🔌 Kiro Power - MCP Integration (NEW!)
+
+This project now includes a **Kiro Power** that exposes all functionality as an MCP (Model Context Protocol) server, allowing you to use the Jira Story Analyzer directly from Kiro without opening the GUI.
+
+### Available MCP Tools
+
+1. **fetch_story** - Fetch Jira story with all details
+2. **analyze_story** - AI analysis with 5-section output
+3. **analyze_story_blaze_mode** - Special mode for Blaze Rules projects (includes AI analysis + Kiro prompt)
+4. **generate_blaze_prompt** - Fast prompt generation without AI (new, free)
+5. **generate_test_cases** - Generate Gherkin test cases
+6. **analyze_sprint** - Multi-story dependency analysis
+
+### Installation
+
+See [powers/jira-story-analyzer/README.md](powers/jira-story-analyzer/README.md) for complete setup instructions.
+
+**Quick Setup:**
+```bash
+# 1. Install MCP dependencies
+pip install mcp jira litellm python-dotenv
+
+# 2. Create local config with your credentials
+cd powers/jira-story-analyzer
+cp mcp.json mcp.local.json
+# Edit mcp.local.json with your Jira and AI API keys
+
+# 3. Configure in Kiro
+# Add to .kiro/settings/mcp.json or install via Kiro Powers UI
+```
+
+### Usage in Kiro
+
+**Natural conversation style:**
+```
+You: "Fetch story APIC-1743"
+Kiro: [fetches and displays story details]
+
+You: "Analyze this story using Groq for speed"
+Kiro: [generates 5-section analysis]
+
+You: "Generate test cases"
+Kiro: [creates Gherkin scenarios]
+```
+
+**For Blaze Rules projects:**
+```
+You: "Generate Blaze prompt for APIC-1743"
+Kiro: [creates optimized search prompt]
+     [You can then use this prompt to search the Blaze codebase]
+```
+
+### Benefits of MCP Integration
+
+- ✅ **No GUI needed** - Use directly from Kiro chat
+- ✅ **Workflow integration** - Combine with other Kiro tools
+- ✅ **Faster iteration** - No context switching
+- ✅ **All features available** - Same functionality as GUI
+- ✅ **Free option** - Use Groq for zero-cost analysis
+
+### Documentation
+
+Complete documentation available in [powers/jira-story-analyzer/POWER.md](powers/jira-story-analyzer/POWER.md) including:
+- Detailed tool descriptions
+- Common workflows
+- Troubleshooting guide
+- Best practices
+
 ## 🚀 Advanced Prompt Engineering
 
 This app implements 10+ professional prompt engineering techniques:
