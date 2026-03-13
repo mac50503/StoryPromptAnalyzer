@@ -52,6 +52,8 @@ As a software architect, you spend hours reviewing user stories, identifying mis
 
 This project now includes a **Kiro Power** that exposes all functionality as an MCP (Model Context Protocol) server, allowing you to use the Jira Story Analyzer directly from Kiro without opening the GUI.
 
+![Kiro Power Integration](kiro.png)
+
 ### Available MCP Tools
 
 1. **fetch_story** - Fetch Jira story with all details
